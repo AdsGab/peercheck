@@ -10,33 +10,43 @@ jobs:
   backend:
     name: Backend Build & Test
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: Backend
     steps:
-      - uses: actions/checkout@v4
-      - name: Use Node.js 20
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: Install dependencies
-        run: npm install
-      - name: Run tests (if available)
-        run: npm test || echo "No tests yet"
+
+      - name: Install backend dependencies
+        run: |
+          cd peercheck-backend
+          npm install
+
+      - name: Run backend tests (if available)
+        run: |
+          cd peercheck-backend
+          npm test || echo "No backend tests yet"
 
   frontend:
     name: Frontend Build
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: Frontend
     steps:
-      - uses: actions/checkout@v4
-      - name: Use Node.js 20
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: Install dependencies
-        run: npm install
-      - name: Build project
-        run: npm run build
+
+      - name: Install frontend dependencies
+        run: |
+          cd peercheck-frontend
+          npm install
+
+      - name: Build frontend
+        run: |
+          cd peercheck-frontend
+          npm run build
