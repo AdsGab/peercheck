@@ -4,12 +4,11 @@ import { Link } from "react-router-dom";
 
 // --- 1. CONSTANTS ---
 const ACCENT_COLOR = "#4DF3C8";
-const DARK_BG = "#1e2025";
 const CARD_BG = "#ffffff";
 const INPUT_BG = "#e8e8e8";
 const OVERLAY_COLOR = "rgba(29, 29, 29, 0.7)";
 
-// --- 2. SVG ICON ---
+// --- 2. SVG ICON (Not used, but kept for completeness) ---
 const GoogleIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -49,7 +48,6 @@ const styles = {
     position: "absolute",
     top: 0,
     left: 0,
-    backgroundColor: "black",
     backgroundImage: `url(${loginPageIMG})`,
     backgroundSize: "cover",
     backgroundPosition: "center",
@@ -62,7 +60,6 @@ const styles = {
     backgroundColor: OVERLAY_COLOR,
     display: "flex",
     flexDirection: "column",
-    // FIX: Center content vertically first
     justifyContent: "center",
     padding: "60px",
     boxSizing: "border-box",
@@ -78,7 +75,6 @@ const styles = {
   contentBlock: {
     color: "white",
     maxWidth: "80%",
-    // FIX: Pull the content down from the center point
     marginTop: "150px",
     marginBottom: "0",
   },
@@ -151,7 +147,8 @@ const styles = {
 };
 
 // --- 4. COMPONENT ---
-const LoginPage = () => {
+const SignupPage = () => {
+  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -176,27 +173,18 @@ const LoginPage = () => {
     setLoading(true);
     setError(null);
 
+    // Mock Signup Logic
     try {
-      const response = await fetch("http://localhost:4000/api/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
-      });
+      await new Promise((resolve) => setTimeout(resolve, 1500));
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Login failed");
+      if (username && email && password) {
+        console.log("Signup successful!");
+        // Redirect or show success message
+      } else {
+        setError("All fields are required.");
       }
-
-      localStorage.setItem("token", data.token);
-
-      alert(" Login successful!");
-      console.log("JWT Token:", data.token);
-    } catch (err) {
-      setError(err.message);
+    } catch (e) {
+      setError("An unexpected error occurred during signup.");
     } finally {
       setLoading(false);
     }
@@ -222,7 +210,7 @@ const LoginPage = () => {
           <span style={{ color: ACCENT_COLOR }}>Hi!</span> Peers
         </div>
 
-        {/* Content Block: Uses margin-top to achieve desired low position */}
+        {/* Content Block */}
         <div style={styles.contentBlock}>
           <h4 style={styles.subtitle}>Upload - Review - Feedback</h4>
           <h1 style={styles.title}>
@@ -237,7 +225,7 @@ const LoginPage = () => {
         </div>
       </div>
 
-      {/* RIGHT SIDE: Login Form */}
+      {/* RIGHT SIDE: Signup Form */}
       <div
         style={{
           ...styles.rightSide,
@@ -246,9 +234,18 @@ const LoginPage = () => {
         }}
       >
         <div style={styles.loginCard}>
-          <h2 style={styles.formTitle}>Welcome Back!</h2>
+          <h2 style={styles.formTitle}>Welcome!</h2>
 
-          {/* Input Fields */}
+          {/* Form Inputs */}
+          <input
+            type="text"
+            placeholder="Username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            style={styles.input}
+            required
+          />
+
           <input
             type="email"
             placeholder="Email"
@@ -267,28 +264,7 @@ const LoginPage = () => {
             required
           />
 
-          {/* Forgot Password Container */}
-          <div
-            style={{
-              textAlign: "right",
-              marginTop: "-15px",
-              marginBottom: "5px",
-            }}
-          >
-            <a
-              href="/forgot"
-              style={{
-                fontSize: "14px",
-                color: "#666",
-                textDecoration: "none",
-                fontWeight: "500",
-              }}
-            >
-              Forgot Password?
-            </a>
-          </div>
-
-          {/* Login Button */}
+          {/* Sign Up Button (No forgotten password / Or / Google buttons) */}
           <button
             type="submit"
             onClick={handleSubmit}
@@ -297,65 +273,13 @@ const LoginPage = () => {
               ...styles.buttonBase,
               backgroundColor: loading ? "#666" : "black",
               color: "white",
+              marginTop: "15px",
             }}
           >
-            {loading ? "Logging in..." : "Login"}
+            {loading ? "Signing up..." : "Sign Up"}
           </button>
 
-          {/* Divider */}
-          <div
-            style={{
-              position: "relative",
-              textAlign: "center",
-              margin: "5px 0",
-              height: "14px",
-            }}
-          >
-            {/* Horizontal Line */}
-            <div
-              style={{
-                position: "absolute",
-                top: "50%",
-                left: "0",
-                right: "0",
-                height: "1px",
-                backgroundColor: "#ccc",
-                zIndex: 0,
-              }}
-            ></div>
-            {/* 'Or' Text */}
-            <span
-              style={{
-                position: "relative",
-                zIndex: 1,
-                backgroundColor: CARD_BG,
-                padding: "0 10px",
-                fontSize: "14px",
-                color: "#888",
-                fontWeight: "500",
-              }}
-            >
-              Or
-            </span>
-          </div>
-
-          {/* Google Button */}
-          <button
-            type="button"
-            style={{
-              ...styles.buttonBase,
-              backgroundColor: "black",
-              color: "white",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <GoogleIcon />
-            Continue With Google
-          </button>
-
-          {/* Sign Up Link */}
+          {/* Login Link */}
           <p
             style={{
               textAlign: "center",
@@ -365,17 +289,17 @@ const LoginPage = () => {
             }}
           >
             <span style={{ color: "#666", fontWeight: "500" }}>
-              Didn’t Have Account?{" "}
+              Already have an account?{" "}
             </span>
             <Link
-              to="/register"
+              to="/login"
               style={{
                 color: "black",
                 fontWeight: "bold",
                 textDecoration: "none",
               }}
             >
-              Sign Up Here
+              Login Here
             </Link>
           </p>
 
@@ -400,4 +324,4 @@ const LoginPage = () => {
   );
 };
 
-export default LoginPage;
+export default SignupPage;

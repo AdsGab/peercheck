@@ -8,6 +8,7 @@
   "keywords": [],
   "dependencies": {
     "bcrypt": "^6.0.0",
+    "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "helmet": "^8.1.0",
@@ -25,15 +26,7 @@
     "dev": "nodemon src/server.js",
     "migrate": "knex migrate:latest",
     "migrate:rollback": "knex migrate:rollback",
-    "seed": "knex seed:run"
-  },
-  "scripts": {
-  "start": "node src/server.js",
-  "dev": "nodemon src/server.js",
-  "migrate": "knex migrate:latest",
-  "migrate:rollback": "knex migrate:rollback",
-  "seed": "knex seed:run",
-  "test": "echo 'Build successful' && exit 0"
-}
-
+    "seed": "knex seed:run",
+    "test": "echo 'Build successful' && exit 0"
+  }
 }
