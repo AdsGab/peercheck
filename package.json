@@ -1,5 +1,13 @@
 {
+  "name": "Peercheck",
+  "version": "1.0.0",
+  "description": "Project for SonarQube analysis",
   "devDependencies": {
     "sonar-scanner": "^3.1.0"
+  },
+  "scripts": {
+    "build": "echo 'No formal build needed, running analysis instead.' && npm run sonarqube",
+    "sonarqube": "sonar-scanner" 
   }
 }
+
