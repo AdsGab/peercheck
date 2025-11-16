@@ -16,11 +16,12 @@ const ProfilePage = () => {
       display: "flex",
       alignItems: "center",
       justifyContent: "space-between",
+      position: 'relative',
       padding: "18px 28px",
       borderBottom: "1px solid #e6e6e6",
     },
     logo: { display: "flex", alignItems: "center", gap: 10, fontWeight: 700, color: "#0b6b58" },
-    nav: { display: "flex", gap: 18, alignItems: "center" },
+  nav: { display: "flex", gap: 18, alignItems: "center", position: 'absolute', left: '50%', transform: 'translateX(-50%)' },
     content: { maxWidth: 1200, margin: "28px auto", padding: "0 18px", boxSizing: "border-box" },
     topRow: { display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 },
     badgeRow: { display: "flex", gap: 12, flexWrap: "wrap", marginTop: 18 },
@@ -49,16 +50,13 @@ const ProfilePage = () => {
     <div style={styles.page}>
       <header style={styles.header}>
         <div style={styles.logo}>
-          <svg width="34" height="34" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect width="24" height="24" rx="4" fill="#06b08e" />
-            <path d="M6 8h12v2H6zM6 12h12v2H6z" fill="#fff" />
-          </svg>
-          <span>Peer Reviewer</span>
+          {/* Logo image should be placed in public/Logo.png */}
+          <img src="/Logo.png" alt="Peer Reviewer" style={{ height: 50, objectFit: 'contain' }} />
         </div>
 
         <nav style={styles.nav}>
           <Link to="/" style={{ textDecoration: "none", color: "#0b6b58", fontWeight: 600 }}>Assignment</Link>
-          <Link to="/upload" style={{ textDecoration: "none", color: "#0b6b58", fontWeight: 600 }}>Upload</Link>
+          <Link to="/upload" style={{ textDecoration: "none", color: "#0b6b58", fontWeight: 700 }}>Upload</Link>
           <Link to="/profile" style={{ textDecoration: "none", color: "#000", fontWeight: 700 }}>Profile</Link>
         </nav>
       </header>
