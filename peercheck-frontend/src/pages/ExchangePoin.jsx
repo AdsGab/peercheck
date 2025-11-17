@@ -22,11 +22,7 @@ const ExchangePoin = () => {
     <div style={styles.page}>
       <header style={styles.header}>
         <div style={{ display: "flex", alignItems: "center", gap: 10, fontWeight: 700, color: "#0b6b58" }}>
-          <svg width="34" height="34" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect width="24" height="24" rx="4" fill="#06b08e" />
-            <path d="M6 8h12v2H6zM6 12h12v2H6z" fill="#fff" />
-          </svg>
-          <span>Peer Reviewer</span>
+          <img src="/Logo.png" alt="PIRU" style={{ height: 50, objectFit: 'contain' }} />
         </div>
         <nav>
           <Link to="/profile" style={{ color: "#0b6b58", fontWeight: 600, textDecoration: "none" }}>Back to Profile</Link>

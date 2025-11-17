@@ -202,7 +202,7 @@ const UploadPage = () => {
       <header style={styles.header}>
         <div style={styles.logo}>
           {/* Logo image should be placed in public/Logo.png */}
-          <img src="/Logo.png" alt="Peer Reviewer" style={{ height: 50, objectFit: 'contain' }} />
+          <img src="/Logo.png" alt="PIRU" style={{ height: 50, objectFit: 'contain' }} />
         </div>
 
         <nav style={styles.nav}>
