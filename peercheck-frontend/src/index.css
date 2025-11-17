@@ -40,6 +40,33 @@ h1 {
 button {
   border-radius: 8px;
   border: 1px solid transparent;
+
+  /* Remove native active/focus tint for buttons (prevents grey flash on click) */
+  button,
+  input[type="button"],
+  input[type="submit"] {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    -webkit-tap-highlight-color: transparent;
+    outline: none;
+  }
+
+  button:active,
+  input[type="button"]:active,
+  input[type="submit"]:active {
+    background-color: transparent !important;
+    color: inherit !important;
+  }
+
+  button:focus,
+  input[type="button"]:focus,
+  input[type="submit"]:focus {
+    outline: none !important;
+    box-shadow: none !important;
+  }
+
+  button::-moz-focus-inner { border: 0; }
   padding: 0.6em 1.2em;
   font-size: 1em;
   font-weight: 500;

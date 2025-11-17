@@ -1,5 +1,5 @@
 import React, { useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 const UploadPage = () => {
   const fileInputRef = useRef(null);
@@ -151,6 +151,8 @@ const UploadPage = () => {
   pill: { background: "#2f6b5f", color: "#fff", padding: "10px 20px", borderRadius: 20, minWidth: 160, textAlign: "center", cursor: "pointer" },
   dropdown: { position: "absolute", marginTop: 8, background: "#fff", color: "#063b2f", borderRadius: 8, boxShadow: "0 6px 18px rgba(0,0,0,0.08)", padding: 8, zIndex: 40, minWidth: 220 },
   dropdownItem: { padding: "8px 10px", borderRadius: 6, cursor: "pointer" },
+  hiButton: { display: 'flex', alignItems: 'center', gap: 12, background: '#0b6b58', color: '#fff', padding: '10px 18px', borderRadius: 30, border: 'none', cursor: 'pointer', fontWeight: 800 },
+  hiIcon: { width: 28, height: 28, borderRadius: 14, background: '#d6b77a', color: '#063b2f', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 800 },
     rightCol: {
       flex: 1,
       display: "flex",
@@ -210,6 +212,10 @@ const UploadPage = () => {
           <Link to="/upload" style={{ color: '#000', fontWeight: 700 }}>Upload</Link>
           <Link to="/profile" style={{ ...styles.link, fontWeight: 700 }}>Profile</Link>
         </nav>
+        
+        <div style={{ position: 'absolute', right: 28, top: '50%', transform: 'translateY(-50%)' }}>
+          <HiButton />
+        </div>
       </header>
 
       <main style={{ flex: 1 }}>
@@ -446,3 +452,18 @@ const UploadPage = () => {
 };
 
 export default UploadPage;
+
+function HiButton() {
+  const navigate = useNavigate();
+  return (
+    <button
+      onMouseDown={(e) => e.preventDefault()}
+      onClick={() => navigate('/profile', { state: { tab: 'edit' } })}
+      style={{ display: 'flex', alignItems: 'center', gap: 12, background: '#0b6b58', color: '#fff', padding: '10px 18px', borderRadius: 30, border: 'none', cursor: 'pointer', fontWeight: 800, outline: 'none', boxShadow: 'none', appearance: 'none', WebkitAppearance: 'none', MozAppearance: 'none' }}
+      aria-label="Open profile edit"
+    >
+      <span style={{ width: 28, height: 28, borderRadius: 14, background: '#d6b77a', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: '#063b2f' }}>👤</span>
+      <span>Hi, Anonymus</span>
+    </button>
+  );
+}
