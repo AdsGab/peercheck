@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
 
 const ProfilePage = () => {
@@ -64,6 +64,15 @@ const ProfilePage = () => {
   const roadmapMax = roadmapMilestones[roadmapMilestones.length - 1].v;
   const progress = Math.min(100, Math.round((points / roadmapMax) * 100));
   const [showRoadmap, setShowRoadmap] = useState(false);
+
+  // Photo upload states (frontend-only handling until backend available)
+  const fileInputRef = useRef(null);
+  const [photoFile, setPhotoFile] = useState(null);
+  const [photoPreview, setPhotoPreview] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadMsg, setUploadMsg] = useState("");
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const modalFileInputRef = useRef(null);
 
   // Example data for assignments and answers
   const sampleAssignments = [
@@ -132,6 +141,131 @@ const ProfilePage = () => {
       setShowRoadmap(false);
     }
   }, [activeSection, showRoadmap]);
+
+  // Clean up object URL when component unmounts or when preview changes
+  useEffect(() => {
+    return () => {
+      if (photoPreview && typeof photoPreview === 'string' && photoPreview.startsWith('blob:')) {
+        URL.revokeObjectURL(photoPreview);
+      }
+    };
+  }, [photoPreview]);
+
+  function handleChangePhotoClick() {
+    // Open the upload modal instead of clicking a hidden input directly
+    setShowUploadModal(true);
+  }
+
+  function handleFileChange(e) {
+    const f = e.target.files && e.target.files[0];
+    if (!f) return;
+    // Basic validation: only images and max 5MB
+    if (!f.type.startsWith('image/')) {
+      setUploadMsg('Please select an image file.');
+      return;
+    }
+    if (f.size > 5 * 1024 * 1024) {
+      setUploadMsg('Image too large (max 5MB).');
+      return;
+    }
+    setPhotoFile(f);
+    const url = URL.createObjectURL(f);
+    setPhotoPreview(url);
+    setUploadMsg('');
+  }
+
+  // Helper to set file (used for drop or programmatic selection)
+  function setSelectedFile(f) {
+    if (!f) return;
+    if (!f.type || !f.type.startsWith('image/')) {
+      setUploadMsg('Please select an image file.');
+      return;
+    }
+    if (f.size > 5 * 1024 * 1024) {
+      setUploadMsg('Image too large (max 5MB).');
+      return;
+    }
+    setPhotoFile(f);
+    const url = URL.createObjectURL(f);
+    setPhotoPreview(url);
+    setUploadMsg('');
+  }
+
+  function handleModalFileChange(e) {
+    const f = e.target.files && e.target.files[0];
+    setSelectedFile(f);
+  }
+
+  function handleDrop(e) {
+    e.preventDefault();
+    const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+    setSelectedFile(f);
+  }
+
+  function closeUploadModal() {
+    // clear selection but don't store
+    if (photoPreview && typeof photoPreview === 'string' && photoPreview.startsWith('blob:')) {
+      URL.revokeObjectURL(photoPreview);
+    }
+    setPhotoFile(null);
+    setPhotoPreview(null);
+    setShowUploadModal(false);
+    setUploadMsg('');
+    if (modalFileInputRef.current) modalFileInputRef.current.value = null;
+  }
+
+  async function handleConfirmUpload() {
+    // Use existing save logic to persist to localStorage
+    await handleSaveProfile();
+    setShowUploadModal(false);
+  }
+
+  function handleCancelPhoto() {
+    if (photoPreview && typeof photoPreview === 'string' && photoPreview.startsWith('blob:')) {
+      URL.revokeObjectURL(photoPreview);
+    }
+    setPhotoFile(null);
+    setPhotoPreview(null);
+    setUploadMsg('Cancelled');
+    if (fileInputRef.current) fileInputRef.current.value = null;
+  }
+
+  // Convert file to base64 string (used for localStorage fallback)
+  function fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = (err) => reject(err);
+      reader.readAsDataURL(file);
+    });
+  }
+
+  async function handleSaveProfile() {
+    // If there's a new photo selected, attempt to upload it; otherwise just save profile fields (mock)
+    if (!photoFile) {
+      // Mock save of textual profile fields
+      setUploadMsg('Profile saved (no photo change).');
+      return;
+    }
+
+    setUploading(true);
+    setUploadMsg('Uploading...');
+      try {
+        // Backend not available yet — save to localStorage as a pending upload
+        const b64 = await fileToBase64(photoFile);
+        const pending = { ts: Date.now(), fileName: photoFile.name, dataUrl: b64 };
+        localStorage.setItem('profilePhotoPending', JSON.stringify(pending));
+        setUploadMsg('Saved locally. Photo will be uploaded when backend is available.');
+        setPhotoFile(null);
+        if (photoPreview && typeof photoPreview === 'string' && photoPreview.startsWith('blob:')) URL.revokeObjectURL(photoPreview);
+        setPhotoPreview(null);
+        if (fileInputRef.current) fileInputRef.current.value = null;
+      } catch (e2) {
+        setUploadMsg('Failed to store photo locally.');
+      } finally {
+        setUploading(false);
+      }
+  }
 
   return (
     <div style={styles.page}>
@@ -291,26 +425,69 @@ const ProfilePage = () => {
         {activeSection === 'edit' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 600 }}>
             <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-              <div style={{ width: 60, height: 60, borderRadius: 30, background: '#e9fff4' }} />
+              {/* Avatar preview or placeholder */}
+              {photoPreview ? (
+                <img src={photoPreview} alt="Preview" style={{ width: 60, height: 60, borderRadius: 30, objectFit: 'cover', background: '#e9fff4' }} />
+              ) : (
+                <div style={{ width: 60, height: 60, borderRadius: 30, background: '#e9fff4' }} />
+              )}
+
               <div>
                 <div style={{ fontWeight: 800 }}>Hi, Anonymus</div>
-                <button style={{ marginTop: 6, padding: '8px 10px', borderRadius: 8, border: 'none', background: '#0b6b58', color: '#fff' }}>Change Photo</button>
+                <button onMouseDown={(e) => e.preventDefault()} onClick={handleChangePhotoClick} style={{ marginTop: 6, padding: '8px 10px', borderRadius: 8, border: 'none', background: '#0b6b58', color: '#fff' }} aria-label="Change photo">Change Photo</button>
+                {/* Hidden file input */}
+                <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileChange} style={{ display: 'none' }} />
               </div>
             </div>
 
             <input placeholder="Name" defaultValue="Anonymus" style={{ padding: 12, borderRadius: 12, border: 'none', background: '#0b6b58', color: '#fff' }} />
             <input placeholder="Email" defaultValue="anonymus@gmail.com" style={{ padding: 12, borderRadius: 12, border: 'none', background: '#0b6b58', color: '#fff' }} />
             <input placeholder="Password" defaultValue="password1234" type="password" style={{ padding: 12, borderRadius: 12, border: 'none', background: '#0b6b58', color: '#fff' }} />
-            <div style={{ display: 'flex', gap: 12 }}>
-              <button style={{ ...styles.goBtn, background: '#fff', color: '#063b2f', border: '1px solid #ccc' }}>Save</button>
-              <button style={{ ...styles.goBtn, background: '#fff', color: '#063b2f', border: '1px solid #ccc' }}>Log Out</button>
+            <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+              <button onClick={handleSaveProfile} disabled={uploading} style={{ ...styles.goBtn, background: '#fff', color: '#063b2f', border: '1px solid #ccc' }}>{uploading ? 'Saving...' : 'Save'}</button>
+              <button onClick={() => { /* placeholder for logout action */ }} style={{ ...styles.goBtn, background: '#fff', color: '#063b2f', border: '1px solid #ccc' }}>Log Out</button>
+              {photoPreview && (
+                <button onClick={handleCancelPhoto} style={{ ...styles.goBtn, background: '#fff', color: '#b30000', border: '1px solid #ccc' }}>Cancel Photo</button>
+              )}
             </div>
+
+            {/* Upload / status message */}
+            {uploadMsg && (<div style={{ fontSize: 13, color: '#333' }}>{uploadMsg}</div>)}
           </div>
         )}
 
         {/* Roadmap modal (toggled by trophy) */}
         {showRoadmap && (
           <Roadmap points={points} onClose={() => setShowRoadmap(false)} milestones={roadmapMilestones} />
+        )}
+
+        {/* Upload modal shown when user clicks Change Photo */}
+        {showUploadModal && (
+          <div style={{ position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.45)', zIndex: 1300 }} onClick={closeUploadModal}>
+            <div onClick={(e) => e.stopPropagation()} style={{ width: 'min(800px, 92%)', background: '#0b6b58', padding: 24, borderRadius: 10, boxSizing: 'border-box', color: '#fff', textAlign: 'center' }}>
+              <div
+                onClick={() => modalFileInputRef.current && modalFileInputRef.current.click()}
+                onDrop={handleDrop}
+                onDragOver={(e) => e.preventDefault()}
+                style={{ height: 220, borderRadius: 8, background: '#e6e6e6', color: '#063b2f', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', cursor: 'pointer' }}
+              >
+                {photoPreview ? (
+                  <img src={photoPreview} alt="Selected" style={{ maxHeight: 200, maxWidth: '100%', objectFit: 'contain', borderRadius: 6 }} />
+                ) : (
+                  <>
+                    <div style={{ fontSize: 28 }}>⬆️</div>
+                    <div style={{ marginTop: 8, color: '#063b2f', fontWeight: 700 }}>Upload Image</div>
+                    <div style={{ marginTop: 6, fontSize: 13, color: '#063b2f' }}>Click or drop image here</div>
+                  </>
+                )}
+                <input ref={modalFileInputRef} type="file" accept="image/*" onChange={handleModalFileChange} style={{ display: 'none' }} />
+              </div>
+
+              <div style={{ marginTop: 18 }}>
+                <button onClick={handleConfirmUpload} disabled={!photoFile || uploading} style={{ background: '#12c48b', color: '#063b2f', padding: '10px 28px', borderRadius: 12, border: 'none', cursor: 'pointer', fontWeight: 700 }}>{uploading ? 'Saving...' : 'Confirm'}</button>
+              </div>
+            </div>
+          </div>
         )}
 
         {/* Exchange link only visible on Rank tab */}
