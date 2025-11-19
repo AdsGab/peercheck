@@ -68,6 +68,9 @@ const ProfilePage = () => {
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
   const [showSaveConfirm, setShowSaveConfirm] = useState(false);
+  const [uploadMsg, setUploadMsg] = useState("");
+  const [previewUrl, setPreviewUrl] = useState(null);
+  const [uploading, setUploading] = useState(false);
 
   // Example data for assignments and answers
   const sampleAssignments = [
@@ -137,40 +140,25 @@ const ProfilePage = () => {
     }
   }, [activeSection, showRoadmap]);
 
-  // Clean up object URL when component unmounts or when preview changes
+  // Create object URL for preview when `selectedFile` changes and clean up previous URL
   useEffect(() => {
-    return () => {
-      if (photoPreview && typeof photoPreview === 'string' && photoPreview.startsWith('blob:')) {
-        URL.revokeObjectURL(photoPreview);
-      }
-    };
-  }, [photoPreview]);
+    if (selectedFile) {
+      const url = URL.createObjectURL(selectedFile);
+      setPreviewUrl(url);
+      return () => URL.revokeObjectURL(url);
+    } else {
+      setPreviewUrl(null);
+    }
+  }, [selectedFile]);
 
   function handleChangePhotoClick() {
     // Open the upload modal instead of clicking a hidden input directly
     setShowUploadModal(true);
   }
 
+  // Select file from an <input> or drop; validate then store in `selectedFile`
   function handleFileChange(e) {
     const f = e.target.files && e.target.files[0];
-    if (!f) return;
-    // Basic validation: only images and max 5MB
-    if (!f.type.startsWith('image/')) {
-      setUploadMsg('Please select an image file.');
-      return;
-    }
-    if (f.size > 5 * 1024 * 1024) {
-      setUploadMsg('Image too large (max 5MB).');
-      return;
-    }
-    setPhotoFile(f);
-    const url = URL.createObjectURL(f);
-    setPhotoPreview(url);
-    setUploadMsg('');
-  }
-
-  // Helper to set file (used for drop or programmatic selection)
-  function setSelectedFile(f) {
     if (!f) return;
     if (!f.type || !f.type.startsWith('image/')) {
       setUploadMsg('Please select an image file.');
@@ -180,49 +168,21 @@ const ProfilePage = () => {
       setUploadMsg('Image too large (max 5MB).');
       return;
     }
-    setPhotoFile(f);
-    const url = URL.createObjectURL(f);
-    setPhotoPreview(url);
+    setSelectedFile(f);
     setUploadMsg('');
   }
 
-  function handleModalFileChange(e) {
-    const f = e.target.files && e.target.files[0];
-    setSelectedFile(f);
-  }
-
-  function handleDrop(e) {
+  function handleDropParent(e) {
     e.preventDefault();
     const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
-    setSelectedFile(f);
+    if (!f) return;
+    handleFileChange({ target: { files: [f] } });
   }
 
   function closeUploadModal() {
-    // clear selection but don't store
-    if (photoPreview && typeof photoPreview === 'string' && photoPreview.startsWith('blob:')) {
-      URL.revokeObjectURL(photoPreview);
-    }
-    setPhotoFile(null);
-    setPhotoPreview(null);
+    setSelectedFile(null);
     setShowUploadModal(false);
     setUploadMsg('');
-    if (modalFileInputRef.current) modalFileInputRef.current.value = null;
-  }
-
-  async function handleConfirmUpload() {
-    // Use existing save logic to persist to localStorage
-    await handleSaveProfile();
-    setShowUploadModal(false);
-  }
-
-  function handleCancelPhoto() {
-    if (photoPreview && typeof photoPreview === 'string' && photoPreview.startsWith('blob:')) {
-      URL.revokeObjectURL(photoPreview);
-    }
-    setPhotoFile(null);
-    setPhotoPreview(null);
-    setUploadMsg('Cancelled');
-    if (fileInputRef.current) fileInputRef.current.value = null;
   }
 
   // Convert file to base64 string (used for localStorage fallback)
@@ -235,31 +195,49 @@ const ProfilePage = () => {
     });
   }
 
+  async function handleConfirmUpload(file) {
+    if (!file) return;
+    setUploadMsg('Saving...');
+    try {
+      const b64 = await fileToBase64(file);
+      const pending = { ts: Date.now(), fileName: file.name, dataUrl: b64 };
+      localStorage.setItem('profilePhotoPending', JSON.stringify(pending));
+      setUploadMsg('Saved locally. Photo will be uploaded when backend is available.');
+      setSelectedFile(null);
+      setShowUploadModal(false);
+    } catch (e) {
+      setUploadMsg('Failed to store photo locally.');
+    }
+  }
+
+  function handleCancelPhoto() {
+    setSelectedFile(null);
+    setPreviewUrl(null);
+    setUploadMsg('Cancelled');
+  }
+
   async function handleSaveProfile() {
-    // If there's a new photo selected, attempt to upload it; otherwise just save profile fields (mock)
-    if (!photoFile) {
-      // Mock save of textual profile fields
+    // Save profile fields; if a selected file exists, persist it locally as pending
+    if (!selectedFile) {
       setUploadMsg('Profile saved (no photo change).');
       return;
     }
 
     setUploading(true);
-    setUploadMsg('Uploading...');
-      try {
-        // Backend not available yet — save to localStorage as a pending upload
-        const b64 = await fileToBase64(photoFile);
-        const pending = { ts: Date.now(), fileName: photoFile.name, dataUrl: b64 };
-        localStorage.setItem('profilePhotoPending', JSON.stringify(pending));
-        setUploadMsg('Saved locally. Photo will be uploaded when backend is available.');
-        setPhotoFile(null);
-        if (photoPreview && typeof photoPreview === 'string' && photoPreview.startsWith('blob:')) URL.revokeObjectURL(photoPreview);
-        setPhotoPreview(null);
-        if (fileInputRef.current) fileInputRef.current.value = null;
-      } catch (e2) {
-        setUploadMsg('Failed to store photo locally.');
-      } finally {
-        setUploading(false);
-      }
+    setUploadMsg('Saving photo...');
+    try {
+      const b64 = await fileToBase64(selectedFile);
+      const pending = { ts: Date.now(), fileName: selectedFile.name, dataUrl: b64 };
+      localStorage.setItem('profilePhotoPending', JSON.stringify(pending));
+      setUploadMsg('Saved locally. Photo will be uploaded when backend is available.');
+      setSelectedFile(null);
+      setPreviewUrl(null);
+      setShowUploadModal(false);
+    } catch (e) {
+      setUploadMsg('Failed to store photo locally.');
+    } finally {
+      setUploading(false);
+    }
   }
 
   return (
@@ -422,8 +400,8 @@ const ProfilePage = () => {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 600 }}>
             <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
               {/* Avatar preview or placeholder */}
-              {photoPreview ? (
-                <img src={photoPreview} alt="Preview" style={{ width: 60, height: 60, borderRadius: 30, objectFit: 'cover', background: '#e9fff4' }} />
+              {previewUrl ? (
+                <img src={previewUrl} alt="Preview" style={{ width: 60, height: 60, borderRadius: 30, objectFit: 'cover', background: '#e9fff4' }} />
               ) : (
                 <div style={{ width: 60, height: 60, borderRadius: 30, background: '#e9fff4' }} />
               )}
@@ -450,11 +428,16 @@ const ProfilePage = () => {
         {/* Upload modal for changing photo */}
         {showUploadModal && (
           <UploadModal
-            onClose={() => { setShowUploadModal(false); setSelectedFile(null); }}
+            onClose={closeUploadModal}
             selectedFile={selectedFile}
             setSelectedFile={setSelectedFile}
-            onConfirm={() => { /* backend upload happens later */ setShowUploadModal(false); }}
+            onConfirm={handleConfirmUpload}
           />
+        )}
+
+        {/* Save confirmation modal */}
+        {showSaveConfirm && (
+          <SaveConfirmModal onClose={() => setShowSaveConfirm(false)} onConfirm={async () => { await handleSaveProfile(); setShowSaveConfirm(false); }} />
         )}
 
         {/* Roadmap modal (toggled by trophy) */}
@@ -462,34 +445,7 @@ const ProfilePage = () => {
           <Roadmap points={points} onClose={() => setShowRoadmap(false)} milestones={roadmapMilestones} />
         )}
 
-        {/* Upload modal shown when user clicks Change Photo */}
-        {showUploadModal && (
-          <div style={{ position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.45)', zIndex: 1300 }} onClick={closeUploadModal}>
-            <div onClick={(e) => e.stopPropagation()} style={{ width: 'min(800px, 92%)', background: '#0b6b58', padding: 24, borderRadius: 10, boxSizing: 'border-box', color: '#fff', textAlign: 'center' }}>
-              <div
-                onClick={() => modalFileInputRef.current && modalFileInputRef.current.click()}
-                onDrop={handleDrop}
-                onDragOver={(e) => e.preventDefault()}
-                style={{ height: 220, borderRadius: 8, background: '#e6e6e6', color: '#063b2f', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', cursor: 'pointer' }}
-              >
-                {photoPreview ? (
-                  <img src={photoPreview} alt="Selected" style={{ maxHeight: 200, maxWidth: '100%', objectFit: 'contain', borderRadius: 6 }} />
-                ) : (
-                  <>
-                    <div style={{ fontSize: 28 }}>⬆️</div>
-                    <div style={{ marginTop: 8, color: '#063b2f', fontWeight: 700 }}>Upload Image</div>
-                    <div style={{ marginTop: 6, fontSize: 13, color: '#063b2f' }}>Click or drop image here</div>
-                  </>
-                )}
-                <input ref={modalFileInputRef} type="file" accept="image/*" onChange={handleModalFileChange} style={{ display: 'none' }} />
-              </div>
-
-              <div style={{ marginTop: 18 }}>
-                <button onClick={handleConfirmUpload} disabled={!photoFile || uploading} style={{ background: '#12c48b', color: '#063b2f', padding: '10px 28px', borderRadius: 12, border: 'none', cursor: 'pointer', fontWeight: 700 }}>{uploading ? 'Saving...' : 'Confirm'}</button>
-              </div>
-            </div>
-          </div>
-        )}
+        {/* (Modal rendered via `UploadModal` component above) */}
 
         {/* Exchange link only visible on Rank tab */}
         {activeSection === 'rank' && (
