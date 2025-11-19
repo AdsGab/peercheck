@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from "react";
-import { Link, useLocation } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 
 const ProfilePage = () => {
   const styles = {
@@ -64,15 +64,10 @@ const ProfilePage = () => {
   const roadmapMax = roadmapMilestones[roadmapMilestones.length - 1].v;
   const progress = Math.min(100, Math.round((points / roadmapMax) * 100));
   const [showRoadmap, setShowRoadmap] = useState(false);
-
-  // Photo upload states (frontend-only handling until backend available)
-  const fileInputRef = useRef(null);
-  const [photoFile, setPhotoFile] = useState(null);
-  const [photoPreview, setPhotoPreview] = useState(null);
-  const [uploading, setUploading] = useState(false);
-  const [uploadMsg, setUploadMsg] = useState("");
+  const navigate = useNavigate();
   const [showUploadModal, setShowUploadModal] = useState(false);
-  const modalFileInputRef = useRef(null);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [showSaveConfirm, setShowSaveConfirm] = useState(false);
 
   // Example data for assignments and answers
   const sampleAssignments = [
@@ -339,6 +334,7 @@ const ProfilePage = () => {
           </>
         )}
 
+
         {activeSection === 'assignment' && (
           <div style={{ display: 'flex', justifyContent: 'center' }}>
             <div style={{ width: '100%', maxWidth: 900, display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -414,7 +410,7 @@ const ProfilePage = () => {
                   </div>
 
                   <div style={{ width: 140, flex: '0 0 140px', textAlign: 'center' }}>
-                    <div style={{ background: '#0b6b58', color: '#fff', padding: '10px 14px', borderRadius: 12, display: 'inline-block' }}>Show Review</div>
+                    <div style={{ background: '#02B692', color: '#fff', padding: '10px 14px', borderRadius: 12, display: 'inline-block' }}>Show Review</div>
                   </div>
                 </div>
               ))}
@@ -434,26 +430,31 @@ const ProfilePage = () => {
 
               <div>
                 <div style={{ fontWeight: 800 }}>Hi, Anonymus</div>
-                <button onMouseDown={(e) => e.preventDefault()} onClick={handleChangePhotoClick} style={{ marginTop: 6, padding: '8px 10px', borderRadius: 8, border: 'none', background: '#0b6b58', color: '#fff' }} aria-label="Change photo">Change Photo</button>
-                {/* Hidden file input */}
-                <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileChange} style={{ display: 'none' }} />
+                <button onClick={() => setShowUploadModal(true)} style={{ marginTop: 6, padding: '8px 10px', borderRadius: 8, border: 'none', background: '#02B692', color: '#fff' }}>Change Photo</button>
               </div>
             </div>
 
-            <input placeholder="Name" defaultValue="Anonymus" style={{ padding: 12, borderRadius: 12, border: 'none', background: '#0b6b58', color: '#fff' }} />
-            <input placeholder="Email" defaultValue="anonymus@gmail.com" style={{ padding: 12, borderRadius: 12, border: 'none', background: '#0b6b58', color: '#fff' }} />
-            <input placeholder="Password" defaultValue="password1234" type="password" style={{ padding: 12, borderRadius: 12, border: 'none', background: '#0b6b58', color: '#fff' }} />
-            <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-              <button onClick={handleSaveProfile} disabled={uploading} style={{ ...styles.goBtn, background: '#fff', color: '#063b2f', border: '1px solid #ccc' }}>{uploading ? 'Saving...' : 'Save'}</button>
-              <button onClick={() => { /* placeholder for logout action */ }} style={{ ...styles.goBtn, background: '#fff', color: '#063b2f', border: '1px solid #ccc' }}>Log Out</button>
-              {photoPreview && (
-                <button onClick={handleCancelPhoto} style={{ ...styles.goBtn, background: '#fff', color: '#b30000', border: '1px solid #ccc' }}>Cancel Photo</button>
-              )}
+            <input placeholder="Name" defaultValue="Anonymus" style={{ padding: 12, borderRadius: 12, border: 'none', background: '#02B692', color: '#fff' }} />
+            <input placeholder="Email" defaultValue="anonymus@gmail.com" style={{ padding: 12, borderRadius: 12, border: 'none', background: '#02B692', color: '#fff' }} />
+            <input placeholder="Password" defaultValue="password1234" type="password" style={{ padding: 12, borderRadius: 12, border: 'none', background: '#02B692', color: '#fff' }} />
+            <div style={{ display: 'flex', gap: 12 }}>
+              <button onClick={() => setShowSaveConfirm(true)} style={{ ...styles.goBtn, background: '#fff', color: '#063b2f', border: '1px solid #ccc' }}>Save</button>
+              <button onClick={() => navigate('/login')} style={{ ...styles.goBtn, background: '#fff', color: '#063b2f', border: '1px solid #ccc' }}>Log Out</button>
             </div>
 
             {/* Upload / status message */}
             {uploadMsg && (<div style={{ fontSize: 13, color: '#333' }}>{uploadMsg}</div>)}
           </div>
+        )}
+
+        {/* Upload modal for changing photo */}
+        {showUploadModal && (
+          <UploadModal
+            onClose={() => { setShowUploadModal(false); setSelectedFile(null); }}
+            selectedFile={selectedFile}
+            setSelectedFile={setSelectedFile}
+            onConfirm={() => { /* backend upload happens later */ setShowUploadModal(false); }}
+          />
         )}
 
         {/* Roadmap modal (toggled by trophy) */}
@@ -493,7 +494,7 @@ const ProfilePage = () => {
         {/* Exchange link only visible on Rank tab */}
         {activeSection === 'rank' && (
           <div style={{ marginTop: 18 }}>
-            <Link to="/exchangepoin" style={{ textDecoration: "underline", color: "#0b6b58", fontWeight: 700 }}>Exchange Poin?</Link>
+            <Link to="/exchangepoin" style={{ textDecoration: "underline", color: "#02B692", fontWeight: 700 }}>Exchange Poin?</Link>
           </div>
         )}
 
@@ -540,7 +541,7 @@ const ProfilePage = () => {
 function ProfilePills({ active, setActive }) {
   const base = { padding: '10px 22px', borderRadius: 28, fontWeight: 800, cursor: 'pointer', userSelect: 'none' };
   const activeStyle = { background: '#7FF3DF', color: '#063b2f' };
-  const inactiveStyle = { background: '#2c7a5b', color: '#dffaf0' };
+  const inactiveStyle = { background: '#02B692', color: '#dffaf0' };
 
   const items = [
     { key: 'rank', label: 'Your Rank' },
@@ -568,66 +569,157 @@ function ProfilePills({ active, setActive }) {
 // Roadmap panel component (renders ticks/icons positioned by absolute percentage)
 function Roadmap({ points, onClose, milestones }) {
   const max = milestones[milestones.length - 1].v || 1;
-  const pct = Math.min(100, Math.round((points / max) * 100));
+  // Space ticks evenly across the track regardless of numeric gaps.
+  const count = milestones.length;
+  // Find the index of the 1000-point milestone (or closest match)
+  const fillTo = 1000;
+  const fillIndex = Math.max(0, Math.min(count - 1, milestones.findIndex(m => m.v === fillTo)));
+  // If exact match not found, try to locate the milestone closest to fillTo
+  const resolvedFillIndex = fillIndex >= 0 ? fillIndex : (() => {
+    let best = 0; let bestDiff = Infinity;
+    milestones.forEach((m, i) => {
+      const d = Math.abs(m.v - fillTo);
+      if (d < bestDiff) { best = i; bestDiff = d; }
+    });
+    return best;
+  })();
+  const fillPct = Math.round((resolvedFillIndex / Math.max(1, count - 1)) * 100);
 
-  const overlay = { position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.35)', zIndex: 1200 };
-  const modal = { width: 'min(1000px, 92%)', background: '#e7d2b8', borderRadius: 12, padding: 20, boxSizing: 'border-box' };
-  const trackWrap = { position: 'relative', height: 40, boxSizing: 'border-box', width: '100%' };
-  const track = { height: 14, background: '#e6e6e6', borderRadius: 12, position: 'relative', width: '100%' };
-  const fill = { position: 'absolute', left: 0, top: 0, height: '100%', background: '#1d6f4d', borderRadius: 12, transition: 'width 400ms' };
-
-  const milestoneLabelStyle = {
-    position: 'absolute',
-    transform: 'translateX(-50%)',
-    textAlign: 'center',
-    width: 120,
-    boxSizing: 'border-box',
-    pointerEvents: 'none',
-  };
+  const overlay = { position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.12)', zIndex: 1200 };
+  const modal = { width: 'min(1000px, 92%)', background: '#e7d2b8', borderRadius: 12, padding: 24, boxSizing: 'border-box' };
+  const trackWrap = { position: 'relative', height: 24, boxSizing: 'border-box', width: '100%', marginTop: 12 };
+  const track = { height: 18, background: '#02B692', borderRadius: 12, position: 'relative', width: '100%' };
+  const fill = { position: 'absolute', left: 0, top: 0, height: '100%', background: '#f7c400', borderRadius: '12px 0 0 12px', transition: 'width 400ms' };
 
   return (
     <div style={overlay} role="dialog" aria-label="Rank roadmap modal" onClick={onClose}>
       <div style={modal} onClick={(e) => e.stopPropagation()}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h3 style={{ margin: 0 }}>Rank Information Detail</h3>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            <div style={{ fontSize: 12, color: '#333' }}>{points} Poin</div>
-            <button onClick={onClose} style={{ border: 'none', background: '#063b2f', color: '#fff', padding: '6px 10px', borderRadius: 8, cursor: 'pointer' }} aria-label="Close roadmap">Close</button>
-          </div>
+        <div style={{ textAlign: 'center' }}>
+          <h2 style={{ margin: 0 }}>Rank Information Detail</h2>
+          <div style={{ marginTop: 6, fontSize: 13, color: '#333' }}>{points} Poin</div>
         </div>
 
-        <div style={{ marginTop: 16 }}>
+        <div style={{ marginTop: 18, position: 'relative' }}>
           <div style={trackWrap}>
             <div style={track}>
-              <div style={{ ...fill, width: `${pct}%` }} />
+              <div style={{ ...fill, width: `${fillPct}%` }} />
             </div>
 
             {/* ticks positioned by percentage (small circles above the track) */}
-            {milestones.map((m) => {
-              const leftPct = (m.v / max) * 100;
+            {milestones.map((m, idx) => {
+              // position ticks evenly by index, not by numeric value
+              const leftPct = Math.round((idx / Math.max(1, count - 1)) * 100);
               const left = `${leftPct}%`;
               return (
                 <div key={m.v} style={{ position: 'absolute', left, top: -6, transform: 'translateX(-50%)' }}>
-                  <div style={{ width: 10, height: 10, background: '#0b6b58', borderRadius: 10, boxShadow: '0 0 0 4px rgba(11,107,88,0.06)' }} />
+                  <div style={{ width: 10, height: 10, background: '#02B692', borderRadius: 10 }} />
                 </div>
               );
             })}
-          </div>
 
-          {/* Labels placed under the track, centered on the same percentage positions. Use pointerEvents: none to allow clicks to hit modal. */}
-          <div style={{ position: 'relative', marginTop: 18, minHeight: 80, width: '100%' }}>
-            {milestones.map((m) => {
-              const leftPct = (m.v / max) * 100;
+            {/* labels placed under the track and aligned to the same percentage positions as the ticks */}
+            {milestones.map((m, idx) => {
+              const leftPct = Math.round((idx / Math.max(1, count - 1)) * 100);
               const left = `${leftPct}%`;
               return (
-                <div key={m.v} style={{ ...milestoneLabelStyle, left }}>
-                  <div style={{ fontSize: 20 }}>{m.icon}</div>
-                  <div style={{ marginTop: 6, fontWeight: 700, fontSize: 13 }}>{m.label}</div>
-                  <div style={{ fontSize: 12, color: '#555' }}>{m.v} Poin</div>
+                <div key={m.v} style={{ position: 'absolute', left, top: 30, transform: 'translateX(-50%)', width: 120, textAlign: 'center' }}>
+                  <div style={{ fontSize: 22 }}>{m.icon}</div>
+                  <div style={{ marginTop: 6, fontWeight: 800, fontSize: 14 }}>{m.label}</div>
+                  <div style={{ marginTop: 2, color: '#555', fontSize: 13 }}>{m.v} Poin</div>
                 </div>
               );
             })}
           </div>
+        </div>
+
+        <div style={{ display: 'flex', justifyContent: 'center', marginTop: 140 }}>
+          <button onClick={onClose} style={{ border: 'none', background: '#063b2f', color: '#fff', padding: '8px 14px', borderRadius: 8, cursor: 'pointer' }} aria-label="Close roadmap">Close</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Upload modal used when user clicks 'Change Photo' in edit panel
+function UploadModal({ onClose, selectedFile, setSelectedFile, onConfirm }) {
+  const overlay = { position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#02B692cc', zIndex: 1400 };
+  const modal = { width: 'min(720px, 92%)', background: 'transparent', borderRadius: 12, padding: 20, boxSizing: 'border-box', display: 'flex', flexDirection: 'column', alignItems: 'center' };
+  const inner = { width: '100%', background: '#e7e7e7', borderRadius: 12, padding: 28, boxSizing: 'border-box', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 };
+  const drop = { width: '100%', maxWidth: 640, height: 220, borderRadius: 10, background: '#efefef', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexDirection: 'column', gap: 12, border: '2px dashed rgba(0,0,0,0.06)' };
+  const confirmBtn = { marginTop: 10, padding: '10px 26px', borderRadius: 12, background: '#02B692', color: '#063b2f', border: 'none', fontWeight: 700, cursor: 'pointer' };
+
+  function handleDrop(e) {
+    e.preventDefault();
+    const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+    if (f) setSelectedFile(f);
+  }
+
+  function handleDragOver(e) { e.preventDefault(); }
+
+  function handleFileChange(e) {
+    const f = e.target.files && e.target.files[0];
+    if (f) setSelectedFile(f);
+  }
+
+  return (
+    <div style={overlay} role="dialog" aria-label="Upload photo modal" onClick={onClose}>
+      <div style={modal} onClick={(e) => e.stopPropagation()}>
+        <div style={inner}>
+          <div style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ fontWeight: 800 }}>Upload Photo</div>
+            <button onClick={onClose} style={{ background: '#063b2f', color: '#fff', border: 'none', padding: '6px 10px', borderRadius: 8, cursor: 'pointer' }}>Close</button>
+          </div>
+
+          <div
+            style={drop}
+            onDrop={handleDrop}
+            onDragOver={handleDragOver}
+            onClick={() => document.getElementById('profile-upload-input') && document.getElementById('profile-upload-input').click()}
+            aria-label="Select or drag image"
+          >
+            {selectedFile && selectedFile.type && selectedFile.type.startsWith('image/') ? (
+              <img src={URL.createObjectURL(selectedFile)} alt="preview" style={{ maxHeight: 160, maxWidth: '100%', borderRadius: 8 }} />
+            ) : (
+              <>
+                <div style={{ fontSize: 28 }}>⬆️</div>
+                <div style={{ fontWeight: 700 }}>Upload Image</div>
+                <div style={{ fontSize: 13, color: '#666' }}>Select or drag an image here</div>
+              </>
+            )}
+            <input id="profile-upload-input" type="file" accept="image/*" onChange={handleFileChange} style={{ display: 'none' }} />
+          </div>
+
+          <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
+            <button
+              onClick={() => { onConfirm && onConfirm(selectedFile); }}
+              style={confirmBtn}
+              disabled={!selectedFile}
+            >
+              Confirm
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Small confirmation modal for Save action
+function SaveConfirmModal({ onClose, onConfirm }) {
+  const overlay = { position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(2,182,146,0.35)', zIndex: 1400 };
+  const box = { width: 380, background: '#e7fff4', borderRadius: 12, padding: 20, boxSizing: 'border-box', textAlign: 'center', color: '#063b2f' };
+  const btnRow = { display: 'flex', justifyContent: 'center', gap: 12, marginTop: 12 };
+  const okBtn = { background: '#02B692', color: '#063b2f', padding: '8px 18px', borderRadius: 10, border: 'none', fontWeight: 800, cursor: 'pointer' };
+  const cancelBtn = { background: '#fff', color: '#063b2f', padding: '8px 18px', borderRadius: 10, border: '1px solid #ccc', cursor: 'pointer' };
+
+  return (
+    <div style={overlay} onClick={onClose} role="dialog" aria-label="Save confirmation">
+      <div style={box} onClick={(e) => e.stopPropagation()}>
+        <div style={{ fontWeight: 900, fontSize: 18 }}>Confirm Save</div>
+        <div style={{ marginTop: 8, color: '#0b6b58' }}>Do you want to save the changes to your profile?</div>
+        <div style={btnRow}>
+          <button onClick={() => { onConfirm && onConfirm(); onClose && onClose(); }} style={okBtn}>Yes, Save</button>
+          <button onClick={onClose} style={cancelBtn}>Cancel</button>
         </div>
       </div>
     </div>
