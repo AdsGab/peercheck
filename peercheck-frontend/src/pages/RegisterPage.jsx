@@ -227,18 +227,18 @@ const RegisterPage = () => {
         }}
       >
         {/* LOGO POSITIONED ABSOLUTELY from the top-left corner */}
-        <div style={styles.logo}>
-          <span style={{ color: ACCENT_COLOR }}>Hi!</span> Peers
-        </div>
+                        <div style={styles.logo}>
+                              <span style={{ color: ACCENT_COLOR }}>Hi!</span> PIRU
+                        </div>
 
         {/* Content Block */}
         <div style={styles.contentBlock}>
           <h4 style={styles.subtitle}>Upload - Review - Feedback</h4>
-          <h1 style={styles.title}>
-            Make sure to have good Quality assignments-
-            <br />
-            <span>Peer Review Solutions</span>
-          </h1>
+                              <h1 style={styles.title}>
+                                    Make sure to have good Quality assignments-
+                                    <br />
+                                    <span>PIRU</span>
+                              </h1>
           <p style={styles.description}>
             The best student website for student to manage their school
             assignment quality with single website.

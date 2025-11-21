@@ -219,7 +219,7 @@ const LoginPage = () => {
       >
         {/* LOGO POSITIONED ABSOLUTELY from the top-left corner */}
         <div style={styles.logo}>
-          <span style={{ color: ACCENT_COLOR }}>Hi!</span> Peers
+          <span style={{ color: ACCENT_COLOR }}>Hi!</span> PIRU
         </div>
 
         {/* Content Block: Uses margin-top to achieve desired low position */}
@@ -228,7 +228,7 @@ const LoginPage = () => {
           <h1 style={styles.title}>
             Make sure to have good Quality assignments-
             <br />
-            <span>Peer Review Solutions</span>
+            <span>PIRU</span>
           </h1>
           <p style={styles.description}>
             The best student website for student to manage their school
