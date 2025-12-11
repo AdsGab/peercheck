@@ -194,8 +194,7 @@ const LoginPage = () => {
 
       console.log("Login successful! JWT Token:", data.token);
       
-      // ⭐ CRITICAL FIX: Navigate to the landing page (/upload) after success
-      navigate("/home"); 
+      navigate("/Dashboard"); 
       
     } catch (err) {
       setError(err.message);

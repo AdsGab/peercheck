@@ -15,6 +15,7 @@ import ProfilePage from "./pages/ProfilePage";
 import PricingPage from "./pages/PricingPage";
 import ExchangePoin from "./pages/ExchangePoin";
 import "./index.css";
+import DashboardPage from "./pages/DashboardPage";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
@@ -36,6 +37,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
         <Route path="/pricing" element={<PricingPage />} /> 
 
         {/* 5. Application Pages (Protected) */}
+        <Route path="/dashboard" element = {<DashboardPage/>} />
         <Route path="/upload" element={<UploadPage />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/exchangepoin" element={<ExchangePoin />} />
