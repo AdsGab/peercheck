@@ -1,11 +1,11 @@
-// src/pages/DashboardPage.jsx (Part 1: Imports and Constants)
+// src/pages/DashboardPage.jsx
 
 import React, { useState } from "react";
-import { Link } from "react-router-dom"; 
+import { Link, useNavigate } from "react-router-dom"; 
 
 // --- 1. CONSTANTS ---
 const ACCENT_COLOR_LIGHT = "#4DF3C8";
-const ACCENT_COLOR_DARK = "#467A78";
+const ACCENT_COLOR_DARK = "#063b2f"; 
 const BG_COLOR = "#F8F8F8";
 const CARD_BG = "white";
 const TEXT_COLOR_PRIMARY = "#2C2C2C";
@@ -26,7 +26,92 @@ const leaderboardData = [
     { rank: 3, name: "Agung", points: 88 },
 ];
 
-// --- STYLES ---
+const difficultyLevels = [
+    "Beginner", "Intermediate", "Expert",
+];
+const jurusanList = [
+    "Rekayasa Perangkat Lunak", "Rekayasa Industri", "Rekayasa Multimedia", 
+    "Biomedis", "Psikologi", "Desain Komunikasi Visual", "Teknik Informatika", 
+    "Manjemen Pemasaran"
+];
+const mataKuliahList = [
+    "Pemrograman Lanjut", "Basis Data", "Riset Operasi", "Desain Grafis",
+    "UI/UX", "Algoritma", "Prinsip Pemasaran"
+];
+
+// --- APP NAVBAR (Shared Header Component) ---
+
+const uploadPageStyles = { 
+    header: {
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        position: 'relative', padding: "18px 28px", borderBottom: "1px solid #e6e6e6",
+        background: CARD_BG,
+    },
+    logo: {
+        display: "flex", alignItems: "center", gap: 10, fontWeight: 700, color: "#0b6b58",
+    },
+    nav: {
+        display: "flex", gap: 18, alignItems: "center", position: 'absolute',
+        left: '50%', transform: 'translateX(-50%)',
+    },
+    link: { color: "#055b47", textDecoration: "none", fontWeight: 600 }, 
+    hiButton: { 
+        display: 'flex', alignItems: 'center', gap: 12, 
+        background: '#0b6b58', color: '#fff', padding: '10px 18px', 
+        borderRadius: 30, border: 'none', cursor: 'pointer', fontWeight: 800, 
+        outline: 'none', boxShadow: 'none' 
+    },
+    hiIcon: { 
+        width: 28, height: 28, borderRadius: 14, background: '#d6b77a', 
+        display: 'inline-flex', alignItems: 'center', justifyContent: 'center', 
+        color: '#063b2f' 
+    },
+};
+
+function HiButton() {
+    const navigate = useNavigate();
+    return (
+        <button
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() => navigate('/profile', { state: { tab: 'edit' } })}
+            style={uploadPageStyles.hiButton}
+            aria-label="Open profile edit"
+        >
+            <span style={uploadPageStyles.hiIcon}>👤</span>
+            <span>Hi, Anonymus</span>
+        </button>
+    );
+}
+
+function AppNavbar({ activePage }) {
+    const linkStyle = (page) => ({
+        ...uploadPageStyles.link,
+        color: activePage === page ? '#000' : uploadPageStyles.link.color,
+        fontWeight: activePage === page ? 700 : 600,
+    });
+
+    return (
+        <header style={uploadPageStyles.header}>
+            <div style={uploadPageStyles.logo}>
+                {/* Logo image should be placed in public/Logo.png */}
+                <img src="/Logo.png" alt="PIRU" style={{ height: 50, objectFit: 'contain' }} />
+            </div>
+
+            <nav style={uploadPageStyles.nav}>
+                <Link to="/dashboard" style={linkStyle('assignment')}>Assignment</Link>
+                <Link to="/upload" style={linkStyle('upload')}>Upload</Link>
+                <Link to="/profile" style={linkStyle('profile')}>Profile</Link>
+            </nav>
+            
+            <div style={{ position: 'absolute', right: 28, top: '50%', transform: 'translateY(-50%)' }}>
+                <HiButton />
+            </div>
+        </header>
+    );
+
+}
+
+// --- DASHBOARD SPECIFIC STYLES ---
 const styles = {
     container: {
         fontFamily: 'Inter, sans-serif',
@@ -34,30 +119,6 @@ const styles = {
         backgroundColor: BG_COLOR,
         padding: '0 0 50px 0',
     },
-    navbar: {
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: '20px 8%',
-        height: '80px',
-        backgroundColor: CARD_BG,
-        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.05)',
-    },
-    navLinkGroup: {
-        display: 'flex',
-        gap: '40px',
-        fontSize: '18px',
-        fontWeight: 600,
-        color: TEXT_COLOR_SECONDARY,
-    },
-    logo: {
-        display: 'flex',
-        alignItems: 'center',
-        fontWeight: 700,
-        fontSize: '20px',
-        color: TEXT_COLOR_PRIMARY,
-    },
-    // Main content layout (Assignments + Leaderboard)
     mainContent: {
         display: 'flex',
         justifyContent: 'space-between',
@@ -65,12 +126,11 @@ const styles = {
         marginTop: '30px',
         gap: '40px',
     },
-    // Left side: Filters and Assignment List
     assignmentArea: {
         flex: 3, 
         minWidth: 0,
+        position: 'relative', 
     },
-    // Right side: Leaderboard
     leaderboardArea: {
         flex: 1, 
         maxWidth: '350px',
@@ -82,6 +142,11 @@ const styles = {
         boxShadow: '0 4px 10px rgba(0, 0, 0, 0.1)',
         color: 'white',
     },
+    filterBar: {
+        display: 'flex',
+        marginBottom: '20px',
+        gap: '10px',
+    },
     filterButton: {
         padding: '12px 25px',
         borderRadius: '10px',
@@ -89,11 +154,34 @@ const styles = {
         fontWeight: 600,
         cursor: 'pointer',
         textAlign: 'center',
-        marginRight: '10px',
         color: CARD_BG,
         border: 'none',
+        backgroundColor: ACCENT_COLOR_DARK, 
+        transition: 'background-color 0.2s',
+        minWidth: '120px',
     },
-    // Assignment Card styles
+    // CRITICAL FIX: The dropdown is now positioned absolutely within its button wrapper
+    dropdown: {
+        position: 'absolute',
+        top: '55px', // Fixed offset from the button height
+        left: '0px', // Align left edge with the button
+        backgroundColor: CARD_BG,
+        borderRadius: '10px',
+        boxShadow: '0 6px 20px rgba(0, 0, 0, 0.15)',
+        zIndex: 50,
+        padding: '10px 0',
+        minWidth: '180px',
+        maxHeight: '300px',
+        overflowY: 'auto',
+    },
+    dropdownItem: {
+        padding: '8px 15px',
+        fontSize: '15px',
+        fontWeight: 600,
+        color: TEXT_COLOR_PRIMARY,
+        cursor: 'pointer',
+        transition: 'background-color 0.1s',
+    },
     cardContainer: {
         display: 'flex',
         backgroundColor: CARD_BG,
@@ -112,27 +200,20 @@ const styles = {
         marginTop: '5px',
         backgroundColor: ACCENT_COLOR_DARK, 
     },
-    
 };
 
+// --- Assignment Card Component (Unchanged) ---
 const AssignmentCard = ({ assignment }) => {
     return (
         <div style={styles.cardContainer}>
             {/* Left Circular Icon */}
             <div style={{ marginRight: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                 <div style={{ 
-                    width: '30px', 
-                    height: '30px', 
-                    borderRadius: '50%', 
-                    backgroundColor: ACCENT_COLOR_LIGHT, 
-                    marginBottom: '10px',
-                    opacity: 0.8
+                    width: '30px', height: '30px', borderRadius: '50%', 
+                    backgroundColor: ACCENT_COLOR_LIGHT, marginBottom: '10px', opacity: 0.8
                 }}></div>
                 <div style={{ 
-                    color: ACCENT_COLOR_DARK, 
-                    fontWeight: 600, 
-                    fontSize: '12px', 
-                    textAlign: 'center' 
+                    color: ACCENT_COLOR_DARK, fontWeight: 600, fontSize: '12px', textAlign: 'center' 
                 }}>
                     {assignment.level}
                 </div>
@@ -150,7 +231,7 @@ const AssignmentCard = ({ assignment }) => {
                 </div>
                 
                 <p style={{ margin: '5px 0', fontSize: '14px', color: TEXT_COLOR_PRIMARY }}>
-                    Tolong Review dokumen mengenai **{assignment.subject}** pada tahap {assignment.detail}, 
+                    Tolong Review tugas mengenai **{assignment.subject}** pada tahap {assignment.detail}, 
                     saya kesulitan dalam mencari poin juga gain mereka untuk divisu...
                 </p>
                 
@@ -167,53 +248,95 @@ const AssignmentCard = ({ assignment }) => {
     );
 };
 
+
+// --- MAIN DASHBOARD COMPONENT ---
 const DashboardPage = () => {
     
-    const [selectedFilter, setSelectedFilter] = useState(null);
+    const [openDropdown, setOpenDropdown] = useState(null); 
+    const [selectedDifficulty, setSelectedDifficulty] = useState(null);
+    const [selectedJurusan, setSelectedJurusan] = useState(null);
+    const [selectedMataKuliah, setSelectedMataKuliah] = useState(null);
 
-    // --- NAVBAR ---
-    const Navbar = () => (
-        <nav style={styles.navbar}>
-            <div style={styles.logo}>
-                <span style={{ color: ACCENT_COLOR_DARK, marginRight: '5px' }}>P</span>
-                <span style={{ fontSize: '20px', letterSpacing: '-0.5px' }}>eeru</span>
-                <span style={{ fontSize: '10px', marginLeft: '5px', color: TEXT_COLOR_SECONDARY }}>Peer Reviewer</span>
-            </div>
-            
-            <div style={styles.navLinkGroup}>
-                <Link to="/home" style={{ textDecoration: 'none', color: TEXT_COLOR_PRIMARY, fontWeight: 700 }}>
-                    Assignment
-                </Link>
-                <Link to="/upload" style={{ textDecoration: 'none', color: TEXT_COLOR_SECONDARY }}>
-                    Upload
-                </Link>
-                <Link to="/profile" style={{ textDecoration: 'none', color: TEXT_COLOR_SECONDARY }}>
-                    Profile
-                </Link>
-            </div>
+    const filterOptions = {
+        'jurusan': jurusanList,
+        'mata': mataKuliahList,
+        'tingkat': difficultyLevels
+    };
 
-            <div style={{ fontSize: '16px', fontWeight: 700, color: ACCENT_COLOR_DARK }}>
-                Premium Peer Reviewer
-            </div>
-        </nav>
-    );
+    const filterState = {
+        'jurusan': selectedJurusan,
+        'mata': selectedMataKuliah,
+        'tingkat': selectedDifficulty
+    };
 
-    // --- FILTERS (Mimicking the button layout) ---
-    const FilterBar = () => (
-        <div style={{ marginBottom: '20px' }}>
-            <button style={{ ...styles.filterButton, backgroundColor: ACCENT_COLOR_DARK }}>
-                Jurusan
-            </button>
-            <button style={{ ...styles.filterButton, backgroundColor: ACCENT_COLOR_DARK }}>
-                Mata Kuliah
-            </button>
-            <button 
-                // This button should trigger the dropdown shown in image_d2b4f0.png
-                style={{ ...styles.filterButton, backgroundColor: ACCENT_COLOR_DARK }}>
-                Tingkat Kesulitan
-            </button>
-        </div>
-    );
+    const setFilterState = (type, value) => {
+        if (type === 'jurusan') setSelectedJurusan(value);
+        else if (type === 'mata') setSelectedMataKuliah(value);
+        else if (type === 'tingkat') setSelectedDifficulty(value);
+        setOpenDropdown(null);
+    };
+
+
+    // --- FILTERS and DROPDOWN LOGIC ---
+    const FilterBar = () => {
+
+        const renderDropdown = (type) => (
+            // CRITICAL FIX: The wrapper div must be position: relative
+            <div style={{ position: 'relative' }}> 
+                <button 
+                    onClick={() => setOpenDropdown(openDropdown === type ? null : type)}
+                    style={{ 
+                        ...styles.filterButton, 
+                        backgroundColor: filterState[type] ? ACCENT_COLOR_LIGHT : ACCENT_COLOR_DARK,
+                        color: filterState[type] ? ACCENT_COLOR_DARK : CARD_BG,
+                        border: filterState[type] ? `1px solid ${ACCENT_COLOR_DARK}` : 'none'
+                    }}
+                >
+                    {filterState[type] || (type === 'jurusan' ? 'Jurusan' : type === 'mata' ? 'Mata Kuliah' : 'Tingkat Kesulitan')}
+                </button>
+                
+                {openDropdown === type && (
+                    // Dropdown is positioned absolutely within the button wrapper
+                    <div style={styles.dropdown}>
+                        {/* Option to clear filter */}
+                        <div
+                            style={{
+                                ...styles.dropdownItem,
+                                color: TEXT_COLOR_SECONDARY,
+                                borderBottom: `1px solid ${BG_COLOR}`,
+                            }}
+                            onClick={() => setFilterState(type, null)}
+                        >
+                            All {type.charAt(0).toUpperCase() + type.slice(1)}
+                        </div>
+                        {/* List options */}
+                        {filterOptions[type].map((option) => (
+                            <div
+                                key={option}
+                                style={{
+                                    ...styles.dropdownItem,
+                                    backgroundColor: filterState[type] === option ? ACCENT_COLOR_LIGHT : CARD_BG,
+                                    color: filterState[type] === option ? ACCENT_COLOR_DARK : TEXT_COLOR_PRIMARY,
+                                    fontWeight: filterState[type] === option ? 700 : 600
+                                }}
+                                onClick={() => setFilterState(type, option)}
+                            >
+                                {option}
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
+        );
+
+        return (
+            <div style={styles.filterBar}>
+                {renderDropdown('jurusan')} 
+                {renderDropdown('mata')}
+                {renderDropdown('tingkat')}
+            </div>
+        );
+    };
 
     // --- LEADERBOARD ---
     const Leaderboard = () => (
@@ -227,16 +350,13 @@ const DashboardPage = () => {
                     justifyContent: 'space-between', 
                     alignItems: 'center', 
                     padding: '10px 0', 
-                    borderBottom: item.rank < 3 ? '1px solid rgba(255, 255, 255, 0.4)' : 'none'
+                    borderBottom: '1px solid rgba(255, 255, 255, 0.4)'
                 }}>
                     <div style={{ display: 'flex', alignItems: 'center' }}>
+                        {/* Placeholder circle */}
                         <div style={{ 
-                            width: '20px', 
-                            height: '20px', 
-                            borderRadius: '50%', 
-                            backgroundColor: 'white', 
-                            marginRight: '10px',
-                            opacity: 0.4
+                            width: '20px', height: '20px', borderRadius: '50%', 
+                            backgroundColor: 'white', marginRight: '10px', opacity: 0.4
                         }}></div>
                         <span style={{ fontWeight: 600, fontSize: '16px' }}>{item.rank}. {item.name}</span>
                     </div>
@@ -253,16 +373,19 @@ const DashboardPage = () => {
     // --- MAIN RENDER ---
     return (
         <div style={styles.container}>
-            <Navbar />
+            <AppNavbar activePage="assignment" />
             
             <div style={styles.mainContent}>
                 
                 {/* Left Side: Filters and Assignments */}
                 <div style={styles.assignmentArea}>
                     <FilterBar />
-                    {dummyAssignments.map(assignment => (
-                        <AssignmentCard key={assignment.id} assignment={assignment} />
-                    ))}
+                    {dummyAssignments
+                        // Apply filter
+                        .filter(assignment => !selectedDifficulty || assignment.level === selectedDifficulty)
+                        .map(assignment => (
+                            <AssignmentCard key={assignment.id} assignment={assignment} />
+                        ))}
                 </div>
 
                 {/* Right Side: Leaderboard */}

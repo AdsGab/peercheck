@@ -208,7 +208,7 @@ const UploadPage = () => {
         </div>
 
         <nav style={styles.nav}>
-          <Link to="/" style={styles.link}>Assignment</Link>
+          <Link to="/dashboard" style={styles.link}>Assignment</Link>
           <Link to="/upload" style={{ color: '#000', fontWeight: 700 }}>Upload</Link>
           <Link to="/profile" style={{ ...styles.link, fontWeight: 700 }}>Profile</Link>
         </nav>
