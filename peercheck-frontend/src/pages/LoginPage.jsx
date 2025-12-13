@@ -1,7 +1,10 @@
+// LoginPage.jsx
+
 import React, { useState, useEffect } from "react";
-// 💡 IMPORTANT: Added useNavigate for redirect
 import { Link, useNavigate } from "react-router-dom"; 
 import loginPageIMG from "../assets/loginPageIMG.jpg";
+// ⭐ CRITICAL FIX: Import useAuth hook
+import useAuth from "../hooks/useAuth"; 
 
 // --- 1. CONSTANTS (Unchanged) ---
 const ACCENT_COLOR = "#4DF3C8";
@@ -150,7 +153,9 @@ const styles = {
 
 // --- 4. COMPONENT ---
 const LoginPage = () => {
-  const navigate = useNavigate(); // Initialize useNavigate
+  const navigate = useNavigate();
+  // ⭐ Use the login function from AuthContext
+  const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -158,7 +163,6 @@ const LoginPage = () => {
 
   const isMobile = window.innerWidth <= 1024;
 
-  // CRITICAL FIX: Ensure global body margin/padding is zeroed out
   useEffect(() => {
     document.body.style.margin = "0";
     document.body.style.padding = "0";
@@ -176,7 +180,8 @@ const LoginPage = () => {
     setError(null);
 
     try {
-      const response = await fetch("http://localhost:4000/api/login", {
+      // API call to your backend
+      const response = await fetch("http://localhost:4000/api/auth/login", { 
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -190,11 +195,13 @@ const LoginPage = () => {
         throw new Error(data.error || "Login failed");
       }
 
-      localStorage.setItem("token", data.token);
+      // ⭐ CRITICAL FIX: Use context login function instead of direct localStorage access
+      login(data.token);
 
-      console.log("Login successful! JWT Token:", data.token);
+      console.log("Login successful! JWT Token sent to AuthContext for storage and decoding.");
       
-      navigate("/Dashboard"); 
+      // Redirect to the dashboard
+      navigate("/dashboard"); 
       
     } catch (err) {
       setError(err.message);

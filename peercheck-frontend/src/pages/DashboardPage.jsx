@@ -1,6 +1,6 @@
 // src/pages/DashboardPage.jsx
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom"; 
 
 // --- 1. CONSTANTS ---
@@ -11,36 +11,20 @@ const CARD_BG = "white";
 const TEXT_COLOR_PRIMARY = "#2C2C2C";
 const TEXT_COLOR_SECONDARY = "#666";
 
-// --- DUMMY DATA ---
-const dummyAssignments = [
-    { id: 1, title: "Anonymus1", subject: "Interaksi Manusia Komputer", detail: "User Model & Persona", level: "Expert", points: 10, time: 7 },
-    { id: 2, title: "Anonymus2", subject: "Design Thingking", detail: "Emphatize", level: "Intermediate", points: 15, time: 15 },
-    { id: 3, title: "Anonymus3", subject: "User Experience", detail: "Solution Ideation", level: "Beginner", points: 5, time: 18 },
-    { id: 4, title: "Anonymus4", subject: "Interaksi Manusia Komputer", detail: "Design Documentation", level: "Intermediate", points: 30, time: 20 },
-    { id: 5, title: "Anonymus5", subject: "User Interface", detail: "Style Guide", level: "Expert", points: 10, time: 30 },
-];
+const BASE_API_URL = "http://localhost:4000/api"; 
 
-const leaderboardData = [
-    { rank: 1, name: "Azazel", points: 100 },
-    { rank: 2, name: "UIKing", points: 98 },
-    { rank: 3, name: "Agung", points: 88 },
-];
-
-const difficultyLevels = [
-    "Beginner", "Intermediate", "Expert",
-];
+// --- MOCK FILTER DATA (Unchanged) ---
+const difficultyLevels = ["Beginner", "Intermediate", "Expert"];
 const jurusanList = [
     "Rekayasa Perangkat Lunak", "Rekayasa Industri", "Rekayasa Multimedia", 
     "Biomedis", "Psikologi", "Desain Komunikasi Visual", "Teknik Informatika", 
     "Manjemen Pemasaran"
 ];
-const mataKuliahList = [
-    "Pemrograman Lanjut", "Basis Data", "Riset Operasi", "Desain Grafis",
-    "UI/UX", "Algoritma", "Prinsip Pemasaran"
-];
+const mataKuliahList = ["Pemrograman Lanjut", "Basis Data", "Riset Operasi", "Desain Grafis", "UI/UX", "Algoritma", "Prinsip Pemasaran"];
+
 
 // --- APP NAVBAR (Shared Header Component) ---
-
+// (AppNavbar and HiButton functions go here - kept for context)
 const uploadPageStyles = { 
     header: {
         display: "flex", alignItems: "center", justifyContent: "space-between",
@@ -93,12 +77,11 @@ function AppNavbar({ activePage }) {
     return (
         <header style={uploadPageStyles.header}>
             <div style={uploadPageStyles.logo}>
-                {/* Logo image should be placed in public/Logo.png */}
                 <img src="/Logo.png" alt="PIRU" style={{ height: 50, objectFit: 'contain' }} />
             </div>
 
             <nav style={uploadPageStyles.nav}>
-                <Link to="/dashboard" style={linkStyle('assignment')}>Assignment</Link>
+                <Link to="/home" style={linkStyle('assignment')}>Assignment</Link>
                 <Link to="/upload" style={linkStyle('upload')}>Upload</Link>
                 <Link to="/profile" style={linkStyle('profile')}>Profile</Link>
             </nav>
@@ -108,8 +91,9 @@ function AppNavbar({ activePage }) {
             </div>
         </header>
     );
-
 }
+// --- END APP NAVBAR ---
+
 
 // --- DASHBOARD SPECIFIC STYLES ---
 const styles = {
@@ -135,7 +119,8 @@ const styles = {
         flex: 1, 
         maxWidth: '350px',
         minWidth: '250px',
-        height: 'fit-content',
+        // FIX: Ensure Leaderboard stretches height
+        minHeight: '400px', 
         backgroundColor: ACCENT_COLOR_LIGHT,
         borderRadius: '15px',
         padding: '30px',
@@ -160,11 +145,10 @@ const styles = {
         transition: 'background-color 0.2s',
         minWidth: '120px',
     },
-    // CRITICAL FIX: The dropdown is now positioned absolutely within its button wrapper
     dropdown: {
         position: 'absolute',
-        top: '55px', // Fixed offset from the button height
-        left: '0px', // Align left edge with the button
+        top: '55px', 
+        left: '0px', 
         backgroundColor: CARD_BG,
         borderRadius: '10px',
         boxShadow: '0 6px 20px rgba(0, 0, 0, 0.15)',
@@ -200,10 +184,27 @@ const styles = {
         marginTop: '5px',
         backgroundColor: ACCENT_COLOR_DARK, 
     },
+    statusMessage: {
+        textAlign: 'center',
+        padding: '20px',
+        fontSize: '16px',
+        color: TEXT_COLOR_SECONDARY,
+    }
 };
 
-// --- Assignment Card Component (Unchanged) ---
+// --- Assignment Card Component ---
 const AssignmentCard = ({ assignment }) => {
+    // Helper function to format the time since creation
+    const formatTime = (isoDate) => {
+        if (!isoDate) return 'Waktu tidak diketahui';
+        // Note: This is a placeholder. Real implementation requires Date diff.
+        // For now, we return a mocked value.
+        const minutesAgo = Math.floor((Date.now() - new Date(isoDate).getTime()) / 60000);
+        if (minutesAgo < 60) return `${minutesAgo} Menit yang lalu`;
+        const hoursAgo = Math.floor(minutesAgo / 60);
+        return `${hoursAgo} Jam yang lalu`;
+    };
+
     return (
         <div style={styles.cardContainer}>
             {/* Left Circular Icon */}
@@ -215,7 +216,7 @@ const AssignmentCard = ({ assignment }) => {
                 <div style={{ 
                     color: ACCENT_COLOR_DARK, fontWeight: 600, fontSize: '12px', textAlign: 'center' 
                 }}>
-                    {assignment.level}
+                    {assignment.tingkat || 'N/A'} {/* MAPPED from API */}
                 </div>
             </div>
 
@@ -223,24 +224,25 @@ const AssignmentCard = ({ assignment }) => {
             <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                     <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: ACCENT_COLOR_DARK }}>
-                        {assignment.title}
+                        {/* Mocked Title since API doesn't have a title field, use Jurusan + Mata Kuliah */}
+                        {assignment.jurusan || 'Jurusan'} - {assignment.mata_kuliah || 'Mata Kuliah'}
                     </h3>
                     <div style={{ fontSize: '12px', color: TEXT_COLOR_SECONDARY }}>
-                        {assignment.time} Menit yang lalu
+                        {formatTime(assignment.created_at)} {/* MAPPED from API */}
                     </div>
                 </div>
                 
                 <p style={{ margin: '5px 0', fontSize: '14px', color: TEXT_COLOR_PRIMARY }}>
-                    Tolong Review tugas mengenai **{assignment.subject}** pada tahap {assignment.detail}, 
-                    saya kesulitan dalam mencari poin juga gain mereka untuk divisu...
+                    {/* MAPPED from API */}
+                    Tolong Review dokumen mengenai **{assignment.mata_kuliah || 'Mata Kuliah'}**... {assignment.description && assignment.description.substring(0, 100)}...
                 </p>
                 
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: '15px' }}>
                     <div style={styles.levelTag}>
-                        {assignment.detail}
+                        {assignment.tingkat || 'N/A'} {/* MAPPED from API */}
                     </div>
                     <div style={{ fontSize: '16px', fontWeight: 700, color: ACCENT_COLOR_LIGHT }}>
-                        +{assignment.points} Poin
+                        +?? Poin {/* Points are not available in the current schema */}
                     </div>
                 </div>
             </div>
@@ -251,12 +253,80 @@ const AssignmentCard = ({ assignment }) => {
 
 // --- MAIN DASHBOARD COMPONENT ---
 const DashboardPage = () => {
+    const navigate = useNavigate();
     
+    // State for API Data and Loading/Error status
+    const [assignments, setAssignments] = useState([]);
+    const [leaderboard, setLeaderboard] = useState([]); 
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null); 
+
+    // State for Filters (unchanged)
     const [openDropdown, setOpenDropdown] = useState(null); 
     const [selectedDifficulty, setSelectedDifficulty] = useState(null);
     const [selectedJurusan, setSelectedJurusan] = useState(null);
     const [selectedMataKuliah, setSelectedMataKuliah] = useState(null);
 
+    // --- API Fetch Logic ---
+
+    useEffect(() => {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            navigate('/login');
+            return;
+        }
+
+        const fetchData = async () => {
+            setLoading(true);
+            setError(null);
+            
+            try {
+                // 1. Fetch Assignments from /api/tasks
+                const assignmentResponse = await fetch(`${BASE_API_URL}/tasks`, {
+                    headers: { 
+                        'Authorization': `Bearer ${token}`,
+                        'Accept': 'application/json'
+                    }
+                });
+                
+                if (!assignmentResponse.ok) {
+                    const status = assignmentResponse.status;
+                    let errorBody;
+                    try {
+                        errorBody = await assignmentResponse.json();
+                    } catch {
+                        errorBody = await assignmentResponse.text();
+                    }
+                    throw new Error(`[${status}] API Error: ${errorBody.error || errorBody.message || errorBody.substring(0, 50) + '...'}.`);
+                }
+
+                const assignmentData = await assignmentResponse.json();
+                setAssignments(assignmentData); 
+
+                // 2. Leaderboard Mock/Fallback (No changes needed)
+                const mockLeaderboardResponse = [
+                    { rank: 1, name: "Azazel", points: 100 },
+                    { rank: 2, name: "UIKing", points: 98 },
+                    { rank: 3, name: "Agung", points: 88 },
+                ];
+                setLeaderboard(mockLeaderboardResponse);
+
+            } catch (err) {
+                console.error("Dashboard Fetch Error:", err);
+                setError(`API Connection Error: ${err.message}`);
+                setAssignments([]); 
+                setLeaderboard([]);
+                
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchData();
+    }, [navigate]); 
+
+
+    // --- FILTER STATE MANAGEMENT (Unchanged) ---
     const filterOptions = {
         'jurusan': jurusanList,
         'mata': mataKuliahList,
@@ -277,11 +347,10 @@ const DashboardPage = () => {
     };
 
 
-    // --- FILTERS and DROPDOWN LOGIC ---
+    // --- FILTERS and DROPDOWN LOGIC (Unchanged) ---
     const FilterBar = () => {
 
         const renderDropdown = (type) => (
-            // CRITICAL FIX: The wrapper div must be position: relative
             <div style={{ position: 'relative' }}> 
                 <button 
                     onClick={() => setOpenDropdown(openDropdown === type ? null : type)}
@@ -296,7 +365,6 @@ const DashboardPage = () => {
                 </button>
                 
                 {openDropdown === type && (
-                    // Dropdown is positioned absolutely within the button wrapper
                     <div style={styles.dropdown}>
                         {/* Option to clear filter */}
                         <div
@@ -344,25 +412,25 @@ const DashboardPage = () => {
             <h4 style={{ margin: '0 0 20px 0', fontSize: '18px', fontWeight: 700, color: CARD_BG, textAlign: 'center' }}>
                 Weekly Leaderboard <br /> This Subject
             </h4>
-            {leaderboardData.map(item => (
-                <div key={item.rank} style={{ 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
-                    alignItems: 'center', 
-                    padding: '10px 0', 
-                    borderBottom: '1px solid rgba(255, 255, 255, 0.4)'
-                }}>
-                    <div style={{ display: 'flex', alignItems: 'center' }}>
-                        {/* Placeholder circle */}
-                        <div style={{ 
-                            width: '20px', height: '20px', borderRadius: '50%', 
-                            backgroundColor: 'white', marginRight: '10px', opacity: 0.4
-                        }}></div>
-                        <span style={{ fontWeight: 600, fontSize: '16px' }}>{item.rank}. {item.name}</span>
+            {leaderboard.length > 0 ? (
+                leaderboard.map((item, index) => (
+                    <div key={index} style={{ 
+                        display: 'flex', 
+                        justifyContent: 'space-between', 
+                        alignItems: 'center', 
+                        padding: '10px 0', 
+                        borderBottom: '1px solid rgba(255, 255, 255, 0.4)'
+                    }}>
+                        <div style={{ display: 'flex', alignItems: 'center' }}>
+                            <div style={{ width: '20px', height: '20px', borderRadius: '50%', backgroundColor: 'white', marginRight: '10px', opacity: 0.4 }}></div>
+                            <span style={{ fontWeight: 600, fontSize: '16px' }}>{item.rank}. {item.name}</span>
+                        </div>
+                        <span style={{ fontWeight: 700, fontSize: '16px' }}>{item.points} PPoint</span>
                     </div>
-                    <span style={{ fontWeight: 700, fontSize: '16px' }}>{item.points} PPoint</span>
-                </div>
-            ))}
+                ))
+            ) : (
+                <p style={{ opacity: 0.8, textAlign: 'center' }}>No leaderboard data available.</p>
+            )}
             <p style={{ marginTop: '30px', textAlign: 'center', fontSize: '14px', fontWeight: 500, opacity: 0.8 }}>
                 Maybe you are next!
             </p>
@@ -380,9 +448,19 @@ const DashboardPage = () => {
                 {/* Left Side: Filters and Assignments */}
                 <div style={styles.assignmentArea}>
                     <FilterBar />
-                    {dummyAssignments
-                        // Apply filter
-                        .filter(assignment => !selectedDifficulty || assignment.level === selectedDifficulty)
+                    
+                    {/* Data Status Messaging */}
+                    {loading && <p style={styles.statusMessage}>Loading assignments...</p>}
+                    {error && <p style={{...styles.statusMessage, color: 'red'}}>Error: {error}</p>}
+                    
+                    {!loading && assignments.length === 0 && !error && (
+                        <p style={styles.statusMessage}>No assignments found. Start by uploading one!</p>
+                    )}
+
+                    {/* Assignment List */}
+                    {!loading && assignments.length > 0 && assignments
+                        // Filter the list based on selected difficulty
+                        .filter(assignment => !selectedDifficulty || assignment.tingkat === selectedDifficulty) // MAPPED to API field
                         .map(assignment => (
                             <AssignmentCard key={assignment.id} assignment={assignment} />
                         ))}

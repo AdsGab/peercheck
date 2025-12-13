@@ -149,7 +149,7 @@ const styles = {
 
 // --- 4. COMPONENT ---
 const RegisterPage = () => {
-  const navigate = useNavigate(); // Initialize useNavigate
+  const navigate = useNavigate(); 
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -181,8 +181,8 @@ const RegisterPage = () => {
         throw new Error("Please fill in all fields.");
       }
       
-      // FIX: Changed API endpoint from /api/auth/register to /api/register
-      const response = await fetch("http://localhost:4000/api/register", {
+      // ⭐ CRITICAL FIX: Ensure endpoint includes /auth
+      const response = await fetch("http://localhost:4000/api/auth/register", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -193,7 +193,6 @@ const RegisterPage = () => {
             password 
         }),
       });
-
       const data = await response.json(); 
 
       if (!response.ok) {
