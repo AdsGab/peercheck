@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import useAuth from "../hooks/useAuth"; // Assuming you place useAuth in src/hooks/
+import useAuth from "../hooks/useAuth"; 
 
 // --- CONSTANTS ---
 const BASE_API_URL = "http://localhost:4000/api";
@@ -11,28 +11,7 @@ const INITIAL_PROFILE_STATE = {
     rank: 'Gold', 
 };
 
-// --- DUMMY DATA (Re-included for Assignment and Answer sections) ---
-const sampleAssignments = [
-    {
-        id: 1,
-        title: 'Project Tingkat III',
-        course: 'FR & NFR Review',
-        points: 20,
-        time: '10 Menit yang lalu',
-        files: [
-            { id: 'f1', name: 'report.pdf', type: 'pdf', size: '120KB' },
-            { id: 'f2', name: 'diagram.png', type: 'image', size: '450KB', src: '/assets/sample-diagram.png' },
-        ],
-        reviewsCount: 5,
-        reviewers: ['AA', 'BR', 'CM', 'DS', 'ER'],
-    },
-    { id: 2, title: 'Pengolahan PL', course: 'UML & Agile', points: 15, time: '1 Jam yang lalu', files: [{ id: 'f3', name: 'uml.zip', type: 'zip', size: '1.2MB' }], reviewsCount: 3, reviewers: ['AA','BR','CM'] },
-    { id: 3, title: 'User Experience', course: 'Research Plan & Brainstorm', points: 10, time: '2 Jam yang lalu', files: [{ id: 'f4', name: 'ux-mockup.jpg', type: 'image', size: '600KB', src: '/assets/sample-mockup.jpg' }], reviewsCount: 8, reviewers: ['AA','BR','CM','DS','ER','FT','GV','HW'] },
-    { id: 4, title: 'Database Optimization', course: 'Basis Data Lanjut', points: 25, time: '3 Jam yang lalu', files: [{ id: 'f5', name: 'query-plan.pdf', type: 'pdf', size: '200KB' }], reviewsCount: 2, reviewers: ['AA','BR'] },
-    { id: 5, title: 'Sistem Operasi', course: 'Concurrency Assignment', points: 18, time: '8 Jam yang lalu', files: [{ id: 'f6', name: 'lab-results.csv', type: 'csv', size: '85KB' }], reviewsCount: 4, reviewers: ['AA','BR','CM','DS'] },
-    { id: 6, title: 'Pemrograman Mobile', course: 'Android App', points: 30, time: '1 Hari yang lalu', files: [{ id: 'f7', name: 'app-debug.apk', type: 'apk', size: '3.4MB' }], reviewsCount: 6, reviewers: ['AA','BR','CM','DS','ER','FT'] },
-];
-
+// --- DUMMY DATA (Only retaining for Answer section, Assignment section is dynamic) ---
 const sampleAnswers = [
     { id: 1, user: 'anonymus', title: 'Review on UX', body: "Anonymous answer submitted on another user's assignment: suggest improving the user persona and clarifying target audience.", points: 10, ratingAvg: 4.2, ratingCount: 5 },
     { id: 2, user: 'anonymus', title: 'Expert Review', body: "Anonymous answer submitted on another user's assignment: provided expert feedback on persona completeness and recommended next steps.", points: 12, ratingAvg: 4.8, ratingCount: 8 },
@@ -53,6 +32,10 @@ const ProfilePage = () => {
     const [loadingProfile, setLoadingProfile] = useState(true);
     const [profileError, setProfileError] = useState(null);
     
+    // STATE: Assignments and Assignment Loading
+    const [myAssignments, setMyAssignments] = useState([]);
+    const [loadingAssignments, setLoadingAssignments] = useState(false);
+    
     // Form States
     const [nameInput, setNameInput] = useState(INITIAL_PROFILE_STATE.name);
     const [emailInput, setEmailInput] = useState(INITIAL_PROFILE_STATE.email);
@@ -70,7 +53,6 @@ const ProfilePage = () => {
     const [previewUrl, setPreviewUrl] = useState(null);
     const [uploading, setUploading] = useState(false);
 
-    // --- 3. FETCH PROFILE DATA (Mock/Real Logic) ---
     useEffect(() => {
         if (user && user.userId) {
             const fetchUserProfile = async () => {
@@ -101,6 +83,65 @@ const ProfilePage = () => {
             setLoadingProfile(false);
         }
     }, [user, navigate]);
+
+
+    // ⭐ CRITICAL EFFECT: Fetch Assignments uploaded by the user (Corrected timing)
+    useEffect(() => {
+        if (!user || !user.userId) {
+            setMyAssignments([]);
+            setLoadingAssignments(false);
+            return; 
+        }
+
+        const fetchMyAssignments = async () => {
+            const token = localStorage.getItem('token');
+            setLoadingAssignments(true);
+            
+            if (!token) {
+                 setLoadingAssignments(false);
+                 setProfileError("Authentication token is missing. Please log in.");
+                 return;
+            }
+
+            try {
+                const response = await fetch(`${BASE_API_URL}/tasks/my`, {
+                    headers: { 
+                        'Authorization': `Bearer ${token}`,
+                        'Accept': 'application/json'
+                    }
+                });
+                
+                if (!response.ok) {
+                    const status = response.status;
+                    let errorMessage = 'Failed to fetch user assignments';
+                    
+                    try {
+                        const errorBody = await response.json();
+                        errorMessage = errorBody.error || errorMessage;
+                    } catch {
+                        errorMessage = `API Status ${status}: Check token validity.`;
+                    }
+                    
+                    throw new Error(`[${status}] API Error: ${errorMessage}`);
+                }
+
+                const data = await response.json();
+                setMyAssignments(data); 
+
+            } catch (err) {
+                console.error("My Assignments Fetch Error:", err);
+                if (err.message.indexOf("401") === -1) {
+                    setProfileError(err.message); 
+                }
+                setMyAssignments([]);
+            } finally {
+                setLoadingAssignments(false);
+            }
+        };
+
+        fetchMyAssignments();
+        
+    }, [user]); 
 
 
     const styles = {
@@ -139,7 +180,7 @@ const ProfilePage = () => {
         progressFill: { height: "100%", background: "#1d6f4d", borderRadius: 12, transition: "width 400ms" },
         missions: { marginTop: 28, display: "grid", gap: 14 },
         missionCard: { background: "#0f6a4e", color: "#e9fff4", padding: 20, borderRadius: 12, display: "flex", justifyContent: "space-between", alignItems: "center" },
-        goBtn: { background: "#21c79a", color: "#063b2f", padding: "10px 18px", borderRadius: 12, border: "none", cursor: "pointer", fontWeight: 700 },
+        goBtn: { background: "#21c79a", color: "#063b2f", padding: "10px 18px", borderRadius: 12, border: "none", cursor: 'pointer', fontWeight: 700 },
         pillBase: { padding: '10px 22px', borderRadius: 28, fontWeight: 800, cursor: 'pointer', userSelect: 'none' },
         pillActive: { background: '#7FF3DF', color: '#063b2f' },
         pillInactive: { background: '#02B692', color: '#dffaf0' }, 
@@ -160,6 +201,19 @@ const ProfilePage = () => {
     ];
     const roadmapMax = roadmapMilestones[roadmapMilestones.length - 1].v;
     const progress = Math.min(100, Math.round((points / roadmapMax) * 100));
+
+    // Helper to map DB date to simple time string
+    const formatTimeAgo = (dbDate) => {
+        if (!dbDate) return 'undefined';
+        const now = new Date();
+        const past = new Date(dbDate);
+        const diffInMinutes = Math.floor((now - past) / (1000 * 60));
+        if (diffInMinutes < 60) return `${diffInMinutes} Menit yang lalu`;
+        const diffInHours = Math.floor(diffInMinutes / 60);
+        if (diffInHours < 24) return `${diffInHours} Jam yang lalu`;
+        return `${Math.floor(diffInHours / 24)} Hari yang lalu`;
+    };
+
 
     // --- UI/MODAL HANDLERS ---
     useEffect(() => {
@@ -191,19 +245,16 @@ const ProfilePage = () => {
     }
     
     function fileToBase64(file) { 
-        // Mock Base64 conversion
         return new Promise((resolve) => resolve('mock_base64_data')); 
     }
     
     async function handleSaveProfile() {
         setUploadMsg('Saving...');
         
-        // 1. Update local state
         await new Promise(resolve => setTimeout(resolve, 500)); 
         setUserProfile(prev => ({ ...prev, name: nameInput, email: emailInput }));
         setUploadMsg('Profile details updated successfully.');
         
-        // 2. Handle photo upload logic (currently mocked to localStorage)
         if (selectedFile) {
             setUploading(true);
             try {
@@ -248,7 +299,6 @@ const ProfilePage = () => {
                 </nav>
 
                 <div style={{ position: 'absolute', right: 28, top: '50%', transform: 'translateY(-50%)' }}>
-                    {/* DYNAMIC HI BUTTON: Uses userProfile.name */}
                     <button 
                         onMouseDown={(e) => e.preventDefault()} 
                         onClick={() => setActiveSection('edit')} 
@@ -270,7 +320,6 @@ const ProfilePage = () => {
                     <>
                         <div style={styles.topRow}>
                             <div>
-                                {/* DYNAMIC POINTS/RANK */}
                                 <h2 style={{ margin: 0, fontSize: 32 }}>{points} Poin, Your Rank Now Is :</h2>
                                 <div style={{ marginTop: 8, fontWeight: 700, fontSize: 18 }}>{currentRank}, Good Job !</div>
                             </div>
@@ -313,52 +362,51 @@ const ProfilePage = () => {
                 )}
 
 
-                {/* --- ASSIGNMENT SECTION (Uses re-included sampleAssignments) --- */}
+                {/* --- ASSIGNMENT SECTION (Dynamic) --- */}
                 {activeSection === 'assignment' && (
                     <div style={{ display: 'flex', justifyContent: 'center' }}>
                         <div style={{ width: '100%', maxWidth: 900, display: 'flex', flexDirection: 'column', gap: 12 }}>
                             
-                            {sampleAssignments.map(a => (
+                            {/* Loading/Empty State Messages */}
+                            {loadingAssignments && <p style={{ textAlign: 'center', color: '#666' }}>Loading your assignments...</p>}
+
+                            {!loadingAssignments && myAssignments.length === 0 && (
+                                <p style={{ textAlign: 'center', color: '#666' }}>You have not uploaded any assignments yet.</p>
+                            )}
+
+                            {/* List fetched assignments */}
+                            {!loadingAssignments && myAssignments.length > 0 && myAssignments.map(a => (
                                 <div key={a.id} style={{ background: '#e7fff6', borderRadius: 12, padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                    <div>
-                                        <div style={{ fontWeight: 800 }}>{a.title}</div>
-                                        <div style={{ fontSize: 13, color: '#333', marginTop: 6 }}>{a.course} • {a.time}</div>
-                                    </div>
-                                    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                                        <div style={{ fontWeight: 700 }}>{a.points} Poin</div>
-                                        <button style={styles.goBtn} onClick={() => navigate('/upload')}>Show</button>
-                                    </div>
-                                </div>
-
-                                {/* File previews (mock) */}
-                                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                                    {a.files.map(f => (
-                                    <div key={f.id} style={{ width: 120, borderRadius: 8, background: '#fff', padding: 8, boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'center' }}>
-                                        <div style={{ width: 88, height: 60, background: '#f3f3f3', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-                                            {f.type === 'image' ? (
-                                                <img src={f.src || '/assets/file-placeholder.png'} alt={f.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                            ) : (
-                                                <div style={{ fontSize: 24 }}>{f.type === 'pdf' ? '📄' : f.type === 'zip' ? '🗜️' : f.type === 'apk' ? '📱' : '📁'}</div>
-                                            )}
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <div>
+                                            <div style={{ fontWeight: 800 }}>{a.jurusan} - {a.mata_kuliah}</div>
+                                            <div style={{ fontSize: 13, color: '#333', marginTop: 6 }}>{a.tingkat} • {formatTimeAgo(a.created_at)}</div>
                                         </div>
-                                        <div style={{ fontSize: 12, fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', width: '100%', textAlign: 'center' }}>{f.name}</div>
-                                        <div style={{ fontSize: 11, color: '#666' }}>{f.size}</div>
+                                        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                                            <div style={{ fontWeight: 700 }}>20 Poin</div> 
+                                            <button style={styles.goBtn} onClick={() => navigate('/upload')}>Show</button>
+                                        </div>
                                     </div>
-                                    ))}
-                                </div>
 
-                                {/* Reviewers info */}
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                                    <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                                        {a.reviewers.slice(0, 5).map((r, idx) => (
-                                            <div key={idx} title={r} style={{ width: 28, height: 28, borderRadius: 6, background: '#063b2f', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700 }}>{r}</div>
-                                        ))}
-                                        {a.reviewsCount > 5 && <div style={{ fontSize: 12, color: '#333' }}>+{a.reviewsCount - 5} more</div>}
+                                    {/* File previews (Mocked structure based on static data) */}
+                                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                                        <div style={{ width: 120, borderRadius: 8, background: '#fff', padding: 8, boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'center' }}>
+                                            <div style={{ width: 88, height: 60, background: '#f3f3f3', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', fontSize: 24 }}>📄</div>
+                                            <div style={{ fontSize: 12, fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', width: '100%', textAlign: 'center' }}>{a.description && a.description.length > 10 ? a.description.substring(0, 10) + '...' : 'File'}</div>
+                                            <div style={{ fontSize: 11, color: '#666' }}>PDF/DOC</div>
+                                        </div>
                                     </div>
-                                    <div style={{ marginLeft: 'auto', fontSize: 13, color: '#333' }}>{a.reviewsCount} Reviews</div>
+
+                                    {/* Reviewers info (Mocked structure) */}
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                                        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                                            <div key={1} style={{ width: 28, height: 28, borderRadius: 6, background: '#063b2f', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700 }}>AA</div>
+                                            <div key={2} style={{ width: 28, height: 28, borderRadius: 6, background: '#063b2f', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700 }}>BR</div>
+                                            <div style={{ fontSize: 12, color: '#333' }}>+3 more</div>
+                                        </div>
+                                        <div style={{ marginLeft: 'auto', fontSize: 13, color: '#333' }}>5 Reviews</div>
+                                    </div>
                                 </div>
-                            </div>
                             ))}
                         </div>
                     </div>
@@ -410,7 +458,6 @@ const ProfilePage = () => {
                             )}
 
                             <div>
-                                {/* DYNAMIC NAME */}
                                 <div style={{ fontWeight: 800 }}>Hi, {userProfile.name}</div>
                                 <button onClick={() => setShowUploadModal(true)} style={{ marginTop: 6, padding: '8px 10px', borderRadius: 8, border: 'none', background: '#02B692', color: '#fff' }}>Change Photo</button>
                             </div>
@@ -436,7 +483,6 @@ const ProfilePage = () => {
                         onClose={closeUploadModal}
                         selectedFile={selectedFile}
                         setSelectedFile={setSelectedFile}
-                        // Note: onConfirm now calls handleSaveProfile logic directly
                         onConfirm={async (file) => { await handleSaveProfile(file); setShowUploadModal(false); }}
                     />
                 )}
@@ -588,7 +634,7 @@ function Roadmap({ points, onClose, milestones }) {
 }
 
 function UploadModal({ onClose, selectedFile, setSelectedFile, onConfirm }) {
-  const overlay = { position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#02B692cc', zIndex: 1400 };
+  const overlay = { position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.12)', zIndex: 1400 };
   const modal = { width: 'min(720px, 92%)', background: 'transparent', borderRadius: 12, padding: 20, boxSizing: 'border-box', display: 'flex', flexDirection: 'column', alignItems: 'center' };
   const inner = { width: '100%', background: '#e7e7e7', borderRadius: 12, padding: 28, boxSizing: 'border-box', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 };
   const drop = { width: '100%', maxWidth: 640, height: 220, borderRadius: 10, background: '#efefef', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexDirection: 'column', gap: 12, border: '2px dashed rgba(0,0,0,0.06)' };
@@ -667,7 +713,7 @@ function SaveConfirmModal({ onClose, onConfirm }) {
           <button onClick={onClose} style={cancelBtn}>Cancel</button>
         </div>
       </div>
-    </div>
+      </div>
   );
 }
 

@@ -82,11 +82,14 @@ router.get('/my', auth, async (req, res) => {
         throw new Error("Database connection object (req.db) is missing or incorrectly configured.");
     }
 
-    if (!req.user || !req.user.sub) {
-        return res.status(401).json({ error: "Unauthorized: User ID is required to fetch specific assignments." });
-    }
-    
-    const uploaderId = req.user.sub;
+    // ⭐ FIX 1: Check for the actual database ID property (`id`)
+    if (!req.user || !req.user.id) { 
+        // We know req.user.sub is undefined because middleware overwrote it
+        return res.status(401).json({ error: "Unauthorized: User data not attached to request (Auth middleware failure)." });
+    }
+    
+    // ⭐ FIX 2: Use req.user.id (the database row's ID field) instead of req.user.sub (the JWT claim field)
+    const uploaderId = req.user.id;
 
     const [tasks] = await req.db.raw(
       "SELECT * FROM tasks WHERE uploader_id = ? ORDER BY created_at DESC",
