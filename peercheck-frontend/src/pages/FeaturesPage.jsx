@@ -7,18 +7,60 @@ const FeaturesPage = () => {
 
     const ACCENT_COLOR = '#4DF3C8';
     const PRIMARY_TEXT_COLOR = '#2C2C2C';
-    
+
     const FeatureItem = ({ number, title, description }) => (
-        <div style={{ marginBottom: '30px' }}>
+        <div
+            style={{
+                backgroundColor: '#ffffff',
+                padding: '22px 26px',
+                borderRadius: '14px',
+                borderLeft: `5px solid ${ACCENT_COLOR}`,
+                boxShadow: '0 6px 20px rgba(0,0,0,0.06)',
+                transition: 'transform 0.25s ease, box-shadow 0.25s ease',
+            }}
+            onMouseEnter={e => {
+                e.currentTarget.style.transform = 'translateY(-4px)';
+                e.currentTarget.style.boxShadow = '0 12px 30px rgba(0,0,0,0.1)';
+            }}
+            onMouseLeave={e => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 6px 20px rgba(0,0,0,0.06)';
+            }}
+        >
+{/*Sprint3*/}
             <div style={{ display: 'flex', alignItems: 'flex-start', marginBottom: '8px' }}>
-                <span style={{ color: ACCENT_COLOR, fontSize: '22px', fontWeight: 700, marginRight: '10px', marginTop: '3px' }}>
-                    {number}.
-                </span> 
-                <h3 style={{ fontSize: '22px', fontWeight: 600, color: PRIMARY_TEXT_COLOR, margin: 0 }}>
+                <span
+                    style={{
+                        color: PRIMARY_TEXT_COLOR,
+                        fontSize: '22px',
+                        fontWeight: 800,
+                        marginRight: '12px',
+                        lineHeight: '1',
+                    }}
+                >
+                    {number}
+                </span>
+                <h3
+                    style={{
+                        fontSize: '20px',
+                        fontWeight: 700,
+                        color: PRIMARY_TEXT_COLOR,
+                        margin: 0,
+                    }}
+                >
                     {title}
                 </h3>
             </div>
-            <p style={{ color: '#666', fontSize: '16px', lineHeight: '1.6', paddingLeft: '32px', margin: 0 }}>
+
+            <p
+                style={{
+                    color: '#666',
+                    fontSize: '16px',
+                    lineHeight: '1.6',
+                    margin: 0,
+                    paddingLeft: '34px',
+                }}
+            >
                 {description}
             </p>
         </div>
@@ -26,40 +68,124 @@ const FeaturesPage = () => {
 
     return (
         <PeeruLayout activeLink="features">
-            
-            <h1 style={{ color: PRIMARY_TEXT_COLOR, fontSize: '32px', fontWeight: 800, lineHeight: '1.2', marginBottom: '40px' }}>
+
+            {/* PAGE HEADER */}
+            <h4
+                style={{
+                    color: ACCENT_COLOR,
+                    fontSize: '14px',
+                    fontWeight: 700,
+                    letterSpacing: '1px',
+                    textTransform: 'uppercase',
+                    marginTop: '70px',
+                    marginBottom: '12px',
+                }}
+            >
+                Platform Capabilities
+            </h4>
+
+            <h1
+                style={{
+                    color: PRIMARY_TEXT_COLOR,
+                    fontSize: '25px',
+                    fontWeight: 800,
+                    lineHeight: '1.2',
+                    marginTop: '25px',
+                    marginBottom: '10px',
+                }}
+            >
                 Features
             </h1>
-            
-            <FeatureItem 
-                number="1"
-                title="Upload Assignments Easily"
-                description="Upload your assignments in seconds! Peeru supports various file formats like PDF and DOCX so students can share assignments quickly and conveniently."
-            />
-            
-            <FeatureItem 
-                number="2"
-                title="Peeru Reviews"
-                description="Get objective and constructive feedback from fellow students. Each review helps you improve the quality of your assignment before submitting it to your professor."
-            />
 
-            <FeatureItem 
-                number="3"
-                title="Rating & Feedback System"
-                description="Reviewers can not only provide comments, but also rate assignments based on aspects like clarity of ideas, writing structure, and creativity to provide more meaningful feedback."
-            />
-            
-            <FeatureItem 
-                number="4"
-                title="Gamification"
-                description="Gamification can make students have a pleasure to help the other and encourage them to reach the top leader of subjects."
-            />
-            
-            <FeatureItem 
-                number="5"
-                title="Earn good rewards"
-                description="And you can get rewards in the form of cash if you are a good reviewer."
-            />
+            <p
+                style={{
+                    fontSize: '16px',
+                    lineHeight: '1.7',
+                    opacity: 0.8,
+                    maxWidth: '700px',
+                    marginBottom: '40px',
+                    color: 'black',
+                }}
+            >
+                Peeru provides powerful features to help students improve their assignments
+                through structured peer review and meaningful collaboration.
+            </p>
+
+    {/* FEATURE LIST */}
+    <div
+    style={{
+        display: 'grid',
+        gridTemplateColumns: '1fr',
+        gap: '22px',
+        maxWidth: '720px',
+        color: 'black',
+    }}
+    >
+    {[
+        {
+        title: 'Upload Assignments Easily',
+        desc: 'Upload your assignments in seconds. Peeru supports formats such as PDF and DOCX so students can share their work quickly and conveniently.',
+        },
+        {
+        title: 'Peer Review System',
+        desc: 'Receive objective and constructive feedback from fellow students to help improve the quality of your assignments before submission.',
+        },
+        {
+        title: 'Rating & Feedback System',
+        desc: 'Reviewers can provide structured comments and ratings based on clarity, writing structure, and creativity.',
+        },
+        {
+        title: 'Gamification',
+        desc: 'Gamification motivates students to actively review assignments and engage through points, levels, and leaderboards.',
+        },
+        {
+        title: 'Earn Rewards',
+        desc: 'Earn rewards in the form of points or cash by becoming a helpful and trusted reviewer.',
+        },
+    ].map((item, index) => (
+        <div
+        key={index}
+        style={{
+            backgroundColor: '#ffffff',
+            padding: '22px 26px',
+            borderRadius: '14px',
+            borderLeft: '5px solid #4DF3C8',
+            boxShadow: '0 6px 20px rgba(0,0,0,0.06)',
+            transition: 'transform 0.25s ease, box-shadow 0.25s ease',
+        }}
+        onMouseEnter={e => {
+            e.currentTarget.style.transform = 'translateY(-4px)';
+            e.currentTarget.style.boxShadow = '0 12px 30px rgba(0,0,0,0.1)';
+        }}
+        onMouseLeave={e => {
+            e.currentTarget.style.transform = 'translateY(0)';
+            e.currentTarget.style.boxShadow = '0 6px 20px rgba(0,0,0,0.06)';
+        }}
+        >
+        <h3
+            style={{
+            fontSize: '20px',
+            fontWeight: 700,
+            marginBottom: '6px',
+            }}
+        >
+            {index + 1}. {item.title}
+        </h3>
+
+        <p
+            style={{
+            fontSize: '16px',
+            lineHeight: '1.6',
+            opacity: 0.85,
+            margin: 0,
+            }}
+        >
+            {item.desc}
+        </p>
+        </div>
+    ))}
+    </div>
+
 
         </PeeruLayout>
     );
