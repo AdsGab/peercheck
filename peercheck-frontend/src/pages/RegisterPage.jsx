@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
-// 💡 IMPORTANT: Added useNavigate for redirect
-import { Link, useNavigate } from "react-router-dom"; 
 import loginPageIMG from "../assets/loginPageIMG.jpg";
+import { Link } from "react-router-dom";
 
 // --- 1. CONSTANTS ---
 const ACCENT_COLOR = "#4DF3C8";
@@ -9,7 +8,7 @@ const CARD_BG = "#ffffff";
 const INPUT_BG = "#e8e8e8";
 const OVERLAY_COLOR = "rgba(29, 29, 29, 0.7)";
 
-// --- 2. SVG ICON (Unchanged) ---
+// --- 2. SVG ICON ---
 const GoogleIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -36,7 +35,7 @@ const GoogleIcon = () => (
   </svg>
 );
 
-// --- 3. STYLES (Unchanged) ---
+// --- 3. STYLES ---
 const styles = {
   container: {
     display: "flex",
@@ -149,7 +148,6 @@ const styles = {
 
 // --- 4. COMPONENT ---
 const RegisterPage = () => {
-  const navigate = useNavigate(); 
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -158,7 +156,7 @@ const RegisterPage = () => {
 
   const isMobile = window.innerWidth <= 1024;
 
- 
+  // CRITICAL FIX: Ensure global body margin/padding is zeroed out
   useEffect(() => {
     document.body.style.margin = "0";
     document.body.style.padding = "0";
@@ -180,36 +178,32 @@ const RegisterPage = () => {
       if (!username || !email || !password) {
         throw new Error("Please fill in all fields.");
       }
-      
-      // ⭐ CRITICAL FIX: Ensure endpoint includes /auth
-      const response = await fetch("http://localhost:4000/api/auth/register", {
+      
+      // FIX: Changed API endpoint from /api/auth/register to /api/register
+      const response = await fetch("http://localhost:4000/api/register", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ 
-            name: username, // Map frontend 'username' to backend 'name'
-            email, 
-            password 
-        }),
+            name: username, // Map frontend 'username' to backend 'name'
+            email, 
+            password 
+        }),
       });
-      const data = await response.json(); 
+
+      const data = await response.json(); // This is the line that throws the JSON error
 
       if (!response.ok) {
-        // If the backend returns an error 
+        // If the backend returns an error (which is likely JSON if the route hits)
         throw new Error(data.error || "Registration failed. Check API connectivity.");
       }
 
       // Registration successful: save the token and notify
       localStorage.setItem("token", data.token);
       console.log("Registration successful! JWT Token:", data.token);
-      setError("Registration successful! Redirecting to login..."); 
-      
-      // ⭐ CRITICAL FIX: Navigate to login after success
-      setTimeout(() => {
-        navigate("/login");
-      }, 1500); // Redirect after a short delay
-      
+      setError("Registration successful! Redirecting to login..."); 
+      
     } catch (err) {
       setError(err.message);
     } finally {
@@ -233,18 +227,18 @@ const RegisterPage = () => {
         }}
       >
         {/* LOGO POSITIONED ABSOLUTELY from the top-left corner */}
-                        <div style={styles.logo}>
-                              <span style={{ color: ACCENT_COLOR }}>Hi!</span> PIRU
-                        </div>
+                        <div style={styles.logo}>
+                              <span style={{ color: ACCENT_COLOR }}>Hi!</span> PIRU
+                        </div>
 
         {/* Content Block */}
         <div style={styles.contentBlock}>
           <h4 style={styles.subtitle}>Upload - Review - Feedback</h4>
-                              <h1 style={styles.title}>
-                                    Make sure to have good Quality assignments-
-                                    <br />
-                                    <span>PIRU</span>
-                              </h1>
+                              <h1 style={styles.title}>
+                                    Make sure to have good Quality assignments-
+                                    <br />
+                                    <span>PIRU</span>
+                              </h1>
           <p style={styles.description}>
             The best student website for student to manage their school
             assignment quality with single website.

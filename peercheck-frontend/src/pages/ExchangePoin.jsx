@@ -1,39 +1,84 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 
+{/*Sprint 1*/}
 const ExchangePoin = () => {
   const points = 1050;
-  const roadmapMilestones = [0, 500, 1000, 1500, 3000, 10000];
-  const roadmapMax = roadmapMilestones[roadmapMilestones.length - 1];
-  const progress = Math.min(100, Math.round((points / roadmapMax) * 100));
+  const roadmapMilestones = [
+  { v: 0, label: 'Bronze', icon: '🥉' },
+  { v: 500, label: 'Silver', icon: '🥈' },
+  { v: 1000, label: 'Gold', icon: '🏆' },
+  { v: 1500, label: 'Diamond', icon: '💎' },
+  { v: 3000, label: 'Challanger', icon: '🏅' },
+  { v: 10000, label: 'Expert', icon: '👑' },
+];
+
+// Cegah undefined (AMAN)
+const currentRank =
+  roadmapMilestones.filter((r) => points >= r.v).slice(-1)[0] ||
+  roadmapMilestones[0];
+
+  const nextRankIndex = roadmapMilestones.indexOf(currentRank) + 1;
+  const nextRank =
+  roadmapMilestones[nextRankIndex] || currentRank;
+
+  let progress = 100;
+
+  if (nextRank.v !== currentRank.v) {
+  progress =
+    ((points - currentRank.v) / (nextRank.v - currentRank.v)) * 100;
+  }
+
+  progress = Math.min(100, Math.max(0, Math.round(progress)));
   const [options] = useState([
     { points: "10.000 Poin", amount: "Rp.100.000", key: "10k" },
     { points: "1000 Poin", amount: "Rp.10.000", key: "1k" },
     { points: "100 Poin", amount: "Rp.1.000", key: "100" },
   ]);
 
+  const [hoverBigCard, setHoverBigCard] = useState(false);
+  const [hoverAmountBtn, setHoverAmountBtn] = useState(null);
+  
   const styles = {
-    page: { fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto", minHeight: "100vh", width: "100vw", display: "flex", flexDirection: "column", background: "#fff", color: "#0b1a1a" },
-    header: { display: "flex", alignItems: "center", justifyContent: "space-between", position: 'relative', padding: "18px 28px", borderBottom: "1px solid #e6e6e6" },
-    logo: { display: "flex", alignItems: "center", gap: 10, fontWeight: 700, color: "#0b6b58" },
-    nav: { display: "flex", gap: 18, alignItems: "center", position: 'absolute', left: '50%', transform: 'translateX(-50%)' },
-    content: { maxWidth: 1200, margin: "28px auto", padding: "0 18px", boxSizing: "border-box" },
-    topRow: { display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 },
-    progressBarWrap: { marginTop: 18, width: "100%" },
-    progressTrack: { height: 14, background: "#e6e6e6", borderRadius: 12, overflow: "hidden" },
-    progressFill: { height: "100%", background: "#1d6f4d", borderRadius: 12, transition: "width 400ms" },
-    infoBtn: { background: '#7ff3df', color: '#063b2f', padding: '12px 18px', borderRadius: 28, fontWeight: 800, border: 'none', cursor: 'pointer' },
-    bigCard: { background: '#0b6b58', color: '#fff', padding: 22, borderRadius: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 },
-    bigCardWrapper: { marginTop: 18, display: 'flex', flexDirection: 'column', gap: 18 },
-    amountBtn: { background: '#17c7a3', color: '#063b2f', padding: '14px 20px', borderRadius: 12, border: 'none', cursor: 'pointer', fontWeight: 800 },
+  page: { fontFamily:"Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto", minHeight:"100vh", width:"100vw", display:"flex", flexDirection:"column", background:"#fdfdfd", color:"#0e1c1c" },
+
+  header: { display:"flex", alignItems:"center", justifyContent:"space-between", padding:"18px 28px", borderBottom:"1px solid #e5e5e5", background:"#ffffff", position:"relative", boxShadow:"0 2px 12px rgba(0,0,0,0.05)" },
+
+  logo: { display:"flex", alignItems:"center", gap:10, fontWeight:800, color:"#0d8064", fontSize:22, letterSpacing:0.3 },
+
+  nav: { display:"flex", gap:20, alignItems:"center", position:"absolute", left:"50%", transform:"translateX(-50%)" },
+
+  content: { maxWidth:1200, margin:"32px auto", padding:"0 22px", boxSizing:"border-box" },
+
+  topRow: { display:"flex", justifyContent:"space-between", alignItems:"center", gap:24 },
+
+  progressBarWrap: { marginTop:22, width:"100%" },
+
+  progressTrack: { height:16, background:"#e9e9e9", borderRadius:14, overflow:"hidden", boxShadow:"inset 0 1px 3px rgba(0,0,0,0.15)" },
+
+  progressFill: { height:"100%", background:"linear-gradient(90deg, #1ea97c, #159c71)", borderRadius:14, transition:"width 450ms ease-in-out", boxShadow:"0 0 12px rgba(30,169,124,0.45)" },
+
+  infoBtn: { background:"linear-gradient(135deg, #7ff3df, #52e2ca)", color:"#063b2f", padding:"12px 20px", borderRadius:32, fontWeight:800, border:"none", cursor:"pointer", boxShadow:"0 4px 12px rgba(0,0,0,0.08)", transition:"transform .15s ease, box-shadow .15s ease" },
+
+  bigCardWrapper: { marginTop:22, display:"flex", flexDirection:"column", gap:20 },
+
+  bigCard: { background:"linear-gradient(135deg, #0d8064, #0a6a53)", color:"#fff", padding:26, borderRadius:16, display:"flex", justifyContent:"space-between", alignItems:"center", gap:18, boxShadow:"0 6px 18px rgba(0,0,0,0.15)", transition:"all .25s ease" },
+
+  bigCardHover: { transform:"translateY(-4px)", boxShadow:"0 12px 26px rgba(0,0,0,0.20)" },
+
+  amountBtn: { background:"linear-gradient(135deg, #1bd3ac, #13bb96)", color:"#063b2f", padding:"15px 24px", borderRadius:12, border:"none", cursor:"pointer", fontWeight:800, boxShadow:"0 4px 14px rgba(0,0,0,0.12)", transition:"all .2s ease" },
+
+  amountBtnHover: { transform:"scale(1.05)", boxShadow:"0 6px 20px rgba(27,211,172,0.45)" },
+
   };
+
 
   const [showModal, setShowModal] = useState(false);
   const [pointsState, setPointsState] = useState(points);
 
   // exchangeState: null or { step: 'method'|'info'|'confirm'|'done', option, method, name, account }
   const [exchangeState, setExchangeState] = useState(null);
-
+  
   return (
     <div style={styles.page}>
       <header style={styles.header}>
@@ -55,12 +100,32 @@ const ExchangePoin = () => {
         </div>
       </header>
 
+{/*Sprint 1*/}
       <main style={styles.content}>
-        <div style={styles.topRow}>
-          <div>
-            <h2 style={{ margin: 0, fontSize: 32 }}>{points} Poin, Your Rank Now Is :</h2>
-            <div style={{ marginTop: 8, fontWeight: 700, fontSize: 18 }}>Gold, Good Job !</div>
-          </div>
+        <div style={styles.topRow}>      
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            <div
+              style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              width: "100%",
+              gap: 12,
+            }}
+            >
+        <h2 style={{ margin: 0, fontSize: 32 }}>
+          {points} Poin, Your Rank Now Is :
+        </h2>
+
+      <span style={{ fontSize: 36 }}>
+        {currentRank.icon}
+      </span>
+    </div>
+
+    <div style={{ marginTop: 8, fontWeight: 700, fontSize: 18 }}>
+      {currentRank.label}, Good Job !
+    </div>
+  </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <div style={{ width: 380 }}>
@@ -69,8 +134,8 @@ const ExchangePoin = () => {
                   <div style={{ ...styles.progressFill, width: `${progress}%` }} />
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8, fontSize: 12, color: "#666" }}>
-                  {roadmapMilestones.map((m, i) => (
-                    <span key={i}>{m} Poin</span>
+                 {roadmapMilestones.map((m, i) => (
+                  <span key={i}>{m.v} Poin</span>
                   ))}
                 </div>
               </div>
@@ -79,7 +144,6 @@ const ExchangePoin = () => {
         </div>
 
         <div style={{ marginTop: 20 }}>
-          <h3 style={{ margin: 0, fontSize: 18 }}>What is Poin Exchange?</h3>
           <p style={{ color: '#666', marginTop: 8, maxWidth: 780 }}>Convert your earned points into rewards. Choose a package below to exchange points for cash rewards. This is a demo action and will show a confirmation alert.</p>
 
           {/* Make the heading itself interactive (underlined + bold) and open the modal */}
@@ -98,28 +162,50 @@ const ExchangePoin = () => {
           </div>
 
           <div style={styles.bigCardWrapper}>
-            {options.map(o => (
-              <div key={o.key} style={{ ...styles.bigCard, borderRadius: 12, padding: 20 }}>
-                <div>
-                  <div style={{ fontWeight: 800 }}>{o.points}</div>
-                  <div style={{ opacity: 0.9, marginTop: 6 }}>Exchange to cash</div>
-                </div>
-                <div>
-                  <button
-                    style={styles.amountBtn}
-                    onClick={() => {
-                      // start exchange flow for this option
-                      const numeric = parseInt(String(o.points).replace(/[^0-9]/g, ''), 10) || 0;
-                      setExchangeState({ step: 'method', option: o, cost: numeric, method: '', name: 'Anonymus', account: '' });
-                    }}
-                  >
-                    {o.amount}
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
+  {options.map(o => (
+    <div
+      key={o.key}
+      style={
+        hoverBigCard === o.key
+          ? { ...styles.bigCard, ...styles.bigCardHover, borderRadius: 12, padding: 20 }
+          : { ...styles.bigCard, borderRadius: 12, padding: 20 }
+      }
+      onMouseEnter={() => setHoverBigCard(o.key)}
+      onMouseLeave={() => setHoverBigCard(null)}
+    >
+      <div>
+        <div style={{ fontWeight: 800 }}>{o.points}</div>
+        <div style={{ opacity: 0.9, marginTop: 6 }}>Exchange to cash</div>
+      </div>
 
+{/*Sprint1*/}
+      <div>
+        <button
+          style={
+            hoverAmountBtn === o.key
+              ? { ...styles.amountBtn, ...styles.amountBtnHover }
+              : styles.amountBtn
+          }
+          onMouseEnter={() => setHoverAmountBtn(o.key)}
+          onMouseLeave={() => setHoverAmountBtn(null)}
+          onClick={() => {
+            const numeric = parseInt(String(o.points).replace(/[^0-9]/g, ''), 10) || 0;
+            setExchangeState({
+              step: 'method',
+              option: o,
+              cost: numeric,
+              method: '',
+              name: 'Anonymus',
+              account: ''
+            });
+          }}
+        >
+          {o.amount}
+        </button>
+      </div>
+    </div>
+  ))}
+</div>
         </div>
       </main>
 
@@ -135,11 +221,11 @@ const ExchangePoin = () => {
             <h2 style={{ margin: '0 0 12px', fontSize: 20 }}>Point Exchange Info & Rules</h2>
             <div style={{ textAlign: 'left', maxWidth: 820, margin: '0 auto' }}>
               <ol style={{ paddingLeft: 18, lineHeight: 1.9, color: '#fff', fontWeight: 700 }}>
-                <li>Every time you perform certain activities in Peeru, you will earn points.</li>
-                <li>These points can be exchanged for money.</li>
-                <li>Points can be exchanged once a month.</li>
-                <li>Each time you exchange a point, your points will be exchanged for a specific number of points. For example, if you exchange 1,000 points, your points will be reduced by 1,000.</li>
-                <li>Warning! Your rank will decrease as your points decrease.</li>
+                <li>- Every time you perform certain activities in Peeru, you will earn points.</li>
+                <li>- These points can be exchanged for money.</li>
+                <li>- Points can be exchanged once a month.</li>
+                <li>- Each time you exchange a point, your points will be exchanged for a specific number of points. For example, if you exchange 1,000 points, your points will be reduced by 1,000.</li>
+                <li>- Warning! Your rank will decrease as your points decrease.</li>
               </ol>
             </div>
             <div style={{ marginTop: 20 }}>
@@ -157,15 +243,56 @@ const ExchangePoin = () => {
               <div>
                 <h3 style={{ marginTop: 0 }}>Choose Exchange Method</h3>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 12 }}>
-                  {['ShopeePay', 'Gopay', 'Ovo', 'Bank', 'Dana', 'Link Aja'].map((m) => (
-                    <button
-                      key={m}
-                      onClick={() => setExchangeState(prev => ({ ...prev, step: 'info', method: m }))}
-                      style={{ padding: '10px 14px', borderRadius: 10, border: '1px solid #e6e6e6', background: '#f7f7f7', cursor: 'pointer', fontWeight: 700 }}
-                    >
-                      {m}
-                    </button>
-                  ))}
+
+{/*Sprint1*/}
+{exchangeState.step === 'method' && (
+  <div>
+
+    {/* LIST PAYMENT + LOGO */}
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 12 }}>
+      {[
+        { name: "ShopeePay", logo: "/shopeepay.jpg" },
+        { name: "Gopay", logo: "/gopay.png" },
+        { name: "Ovo", logo: "/ovo.png" },
+        { name: "Bank", logo: "/bank.png" },
+        { name: "Dana", logo: "/dana.png" },
+        { name: "Link Aja", logo: "/link aja.png" }
+      ].map((m) => (
+        <button
+          key={m.name}
+          onClick={() =>
+            setExchangeState(prev => ({ ...prev, step: 'info', method: m.name }))
+          }
+          style={{
+            padding: '10px 14px',
+            borderRadius: 10,
+            border: '1px solid #e6e6e6',
+            background: '#f7f7f7',
+            cursor: 'pointer',
+            fontWeight: 700,
+            display: "flex",
+            alignItems: "center",
+            gap: "10px",
+            minWidth: "150px"
+          }}
+        >
+          <img
+            src={m.logo}
+            alt={m.name}
+            style={{
+              width: 28,
+              height: 28,
+              borderRadius: 6,
+              objectFit: "cover"
+            }}
+          />
+          {m.name}
+        </button>
+      ))}
+    </div>
+  </div>
+)}
+
                 </div>
                 <div style={{ marginTop: 18, display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
                   <button onClick={() => setExchangeState(null)} style={{ padding: '8px 12px', borderRadius: 8, background: '#eee', border: 'none', cursor: 'pointer' }}>Cancel</button>
