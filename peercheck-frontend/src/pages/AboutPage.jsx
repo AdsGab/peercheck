@@ -13,19 +13,6 @@ const AboutPage = () => {
 
 {/*Sprint 3*/}
   {/* ABOUT PEERU */}
-  <h4
-    style={{
-      color: ACCENT_COLOR,
-      fontSize: '14px',
-      fontWeight: 700,
-      letterSpacing: '1px',
-      marginBottom: '12px',
-      marginTop: '40px',
-      textTransform: 'uppercase',
-    }}
-  >
-    Upload – Review – Feedback
-  </h4>
 
   <h1
     style={{

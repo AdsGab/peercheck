@@ -1,5 +1,6 @@
 import React, { useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import useAuth from "../hooks/useAuth";
 
 const UploadPage = () => {
   const fileInputRef = useRef(null);
@@ -45,6 +46,58 @@ const UploadPage = () => {
   const clearFile = () => {
     setFiles([]);
     if (fileInputRef.current) fileInputRef.current.value = null;
+  };
+
+  const handleUpload = async () => {
+    if (!description || !deadline || !jurusan || !mataKuliah || !tingkat) {
+      alert("Please fill all fields");
+      return;
+    }
+
+    if (files.length === 0) {
+      alert("Please add at least one file");
+      return;
+    }
+
+    try {
+      const formData = new FormData();
+      formData.append("description", description);
+      formData.append("deadline", deadline);
+      formData.append("jurusan", jurusan);
+      formData.append("mataKuliah", mataKuliah);
+      formData.append("tingkat", tingkat);
+
+      // append all uploaded files
+      files.forEach((f) => {
+        formData.append("files", f.file);
+      });
+      const token = localStorage.getItem("token");
+
+      const res = await fetch("http://localhost:4000/api/tasks", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        alert("Upload success!");
+        setFiles([]);
+        setDescription("");
+        setDeadline("");
+        setJurusan("");
+        setMataKuliah("");
+        setTingkat("");
+      } else {
+        alert("Upload failed: " + data.error);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Failed to upload");
+    }
   };
   
 {/*Sprint 2*/}
@@ -152,7 +205,7 @@ const UploadPage = () => {
         </div>
 
         <nav style={styles.nav}>
-          <Link to="/" style={styles.link}>Assignment</Link>
+          <Link to="/dashboard" style={styles.link}>Assignment</Link>
           <Link to="/upload" style={{ color: '#000', fontWeight: 700 }}>Upload</Link>
           <Link to="/profile" style={{ ...styles.link, fontWeight: 700 }}>Profile</Link>
         </nav>
@@ -261,7 +314,7 @@ const UploadPage = () => {
                 </div>
 
                 <div style={{ display: "flex", gap: 12 }}>
-                  <button style={{ ...styles.btnPrimary, ...styles.btnPrimaryIcon }} onClick={() => alert('Upload logic not implemented')}> 
+                  <button style={{ ...styles.btnPrimary, ...styles.btnPrimaryIcon }} onClick={handleUpload}> 
                     <span style={{ display: "inline-block" }}>⬆️</span>
                     <span>Upload</span>
                   </button>
@@ -440,6 +493,7 @@ export default UploadPage;
 
 function HiButton() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   return (
     <button
       onMouseDown={(e) => e.preventDefault()}
@@ -448,7 +502,7 @@ function HiButton() {
       aria-label="Open profile edit"
     >
       <span style={{ width: 28, height: 28, borderRadius: 14, background: '#d6b77a', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: '#063b2f' }}>👤</span>
-      <span>Hi, Anonymus</span>
+      <span>Hi, {user?.username || 'Anonymus'}</span>
     </button>
   );
 }

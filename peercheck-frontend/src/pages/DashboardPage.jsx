@@ -12,20 +12,27 @@ const TEXT_COLOR_SECONDARY = "#666";
 
 const BASE_API_URL = "http://localhost:4000/api"; 
 
-const difficultyLevels = ["Beginner", "Intermediate", "Expert"];
-const jurusanList = [
-    "Rekayasa Perangkat Lunak", "Rekayasa Industri", "Rekayasa Multimedia", 
-    "Biomedis", "Psikologi", "Desain Komunikasi Visual", "Teknik Informatika", 
-    "Manjemen Pemasaran"
-];
-const mataKuliahList = ["Pemrograman Lanjut", "Basis Data", "Riset Operasi", "Desain Grafis", "UI/UX", "Algoritma", "Prinsip Pemasaran"];
+// Filters modeled to match UploadPage.jsx
+const mataKuliahOptions = {
+    "Rekayasa Perangkat Lunak": ["Pemrograman Lanjut", "Basis Data", "Sistem Operasi", "Rekayasa Perangkat Lunak"],
+    "Rekayasa Industri": ["Riset Operasi", "Manajemen Produksi", "Ergonomi"],
+    "Rekayasa Multimedia": ["Desain Grafis", "Multimedia Interaktif", "Animasi"],
+    "Rekayasa Perangkat Lunak Aplikasi": ["Pengembangan Aplikasi Mobile", "UI/UX", "Pemrograman Web"],
+    "Biomedis": ["Biokimia", "Instrumen Medis", "Fisika Kedokteran"],
+    "Psikologi": ["Psikologi Perkembangan", "Psikologi Pendidikan", "Psikometri"],
+    "Desain Komunikasi Visual": ["Tipografi", "Branding", "Desain Editorial"],
+    "Teknik Informatika": ["Algoritma", "Jaringan Komputer", "Kecerdasan Buatan"],
+    "Manjemen Pemasaran": ["Prinsip Pemasaran", "Riset Pasar", "Manajemen Produk"],
+};
+const jurusanList = Object.keys(mataKuliahOptions);
+const tingkatOptions = ["Beginner", "Intermediate", "Expert"];
 
 // --- SHARED UI COMPONENTS ---
 const uploadPageStyles = { 
-    header: { display: "flex", alignItems: "center", justifyContent: "space-between", position: 'relative', padding: "18px 28px", borderBottom: "1px solid #e6e6e6", background: CARD_BG },
-    logo: { display: "flex", alignItems: "center", gap: 10, fontWeight: 700, color: "#0b6b58" },
-    nav: { display: "flex", gap: 18, alignItems: "center", position: 'absolute', left: '50%', transform: 'translateX(-50%)' },
-    link: { color: "#055b47", textDecoration: "none", fontWeight: 600 }, 
+    header: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'relative', padding: '18px 28px', borderBottom: '1px solid #e6e6e6', background: CARD_BG, width: '100vw', boxSizing: 'border-box' },
+    logo: { display: 'flex', alignItems: 'center', gap: 10, fontWeight: 700, color: '#0b6b58' },
+    nav: { display: 'flex', gap: 18, alignItems: 'center', position: 'absolute', left: '50%', transform: 'translateX(-50%)' },
+    link: { color: '#0b6b58', textDecoration: 'none', fontWeight: 700 }, 
     hiButton: { display: 'flex', alignItems: 'center', gap: 12, background: '#0b6b58', color: '#fff', padding: '10px 18px', borderRadius: 30, border: 'none', cursor: 'pointer', fontWeight: 800 },
     hiIcon: { width: 28, height: 28, borderRadius: 14, background: '#d6b77a', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: '#063b2f' },
 };
@@ -42,7 +49,7 @@ function HiButton() {
 }
 
 function AppNavbar({ activePage }) {
-    const linkStyle = (page) => ({ ...uploadPageStyles.link, color: activePage === page ? '#000' : uploadPageStyles.link.color, fontWeight: activePage === page ? 700 : 600 });
+    const linkStyle = (page) => ({ ...uploadPageStyles.link, color: activePage === page ? '#000' : uploadPageStyles.link.color, fontWeight: 700 });
     return (
         <header style={uploadPageStyles.header}>
             <div style={uploadPageStyles.logo}><img src="/Logo.png" alt="PIRU" style={{ height: 50, objectFit: 'contain' }} /></div>
@@ -57,22 +64,35 @@ function AppNavbar({ activePage }) {
 }
 
 const styles = {
-    container: { fontFamily: 'Inter, sans-serif', minHeight: '100vh', backgroundColor: BG_COLOR, padding: '0 0 50px 0' },
-    mainContent: { display: 'flex', justifyContent: 'space-between', padding: '20px 8%', marginTop: '30px', gap: '40px' },
-    assignmentArea: { flex: 3, minWidth: 0, position: 'relative' },
-    leaderboardArea: { flex: 1, maxWidth: '350px', minWidth: '250px', minHeight: '400px', backgroundColor: ACCENT_COLOR_LIGHT, borderRadius: '15px', padding: '30px', boxShadow: '0 4px 10px rgba(0, 0, 0, 0.1)', color: 'white' },
-    filterBar: { display: 'flex', marginBottom: '20px', gap: '10px' },
-    filterButton: { padding: '12px 25px', borderRadius: '10px', fontSize: '15px', fontWeight: 600, cursor: 'pointer', textAlign: 'center', color: CARD_BG, border: 'none', backgroundColor: ACCENT_COLOR_DARK, minWidth: '120px' },
-    dropdown: { position: 'absolute', top: '55px', left: '0px', backgroundColor: CARD_BG, borderRadius: '10px', boxShadow: '0 6px 20px rgba(0, 0, 0, 0.15)', zIndex: 50, padding: '10px 0', minWidth: '180px', maxHeight: '300px', overflowY: 'auto' },
-    dropdownItem: { padding: '8px 15px', fontSize: '15px', fontWeight: 600, color: TEXT_COLOR_PRIMARY, cursor: 'pointer' },
-    cardContainer: { display: 'flex', backgroundColor: CARD_BG, borderRadius: '15px', padding: '20px', marginBottom: '20px', boxShadow: '0 2px 5px rgba(0, 0, 0, 0.05)', cursor: 'pointer' },
+    container: { fontFamily: 'Inter, ui-sans-serif, system-ui, -apple-system, \'Segoe UI\', Roboto', minHeight: '100vh', width: '100vw', display: 'flex', flexDirection: 'column', backgroundColor: BG_COLOR, color: '#0b1a1a' },
+    mainContent: { display: 'flex', gap: 32, padding: 28, flex: 1, boxSizing: 'border-box', alignItems: 'flex-start', maxWidth: 1400, margin: '0 auto', width: '100%' },
+    assignmentArea: { flex: 2, minWidth: 0, position: 'relative' },
+    leaderboardArea: { flex: 0, width: '320px', minHeight: '400px', backgroundColor: ACCENT_COLOR_LIGHT, borderRadius: '15px', padding: '30px', boxShadow: '0 4px 10px rgba(0, 0, 0, 0.1)', color: 'white', boxSizing: 'border-box' },
+    // UploadPage-like filter pills
+    pillsRow: { display: 'flex', gap: 12, alignItems: 'center', marginBottom: 12, position: 'relative', zIndex: 3000 },
+    pill: { background: '#063b2f', color: '#ffffff', padding: '12px 18px', borderRadius: 14, minWidth: 160, textAlign: 'center', cursor: 'pointer', fontWeight: 700, border: '1px solid #d9ece6', transition: 'all 200ms ease', boxShadow: '0 4px 10px rgba(0,0,0,0.08)', position: 'relative', zIndex: 3001 },
+    pillHover: { transform: 'translateY(-3px)', boxShadow: '0 8px 22px rgba(0,0,0,0.12)' },
+    dropdown: { position: 'absolute', marginTop: 8, background: '#fff', color: '#063b2f', borderRadius: 12, boxShadow: '0 12px 30px rgba(0,0,0,0.16)', padding: 8, zIndex: 4000, minWidth: 240 },
+    dropdownItem: { padding: '10px 12px', borderRadius: 6, cursor: 'pointer', fontWeight: 600, transition: 'all 180ms ease' },
+    dropdownItemHover: { background: '#e1faf4', color: '#0b6b58', transform: 'translateX(4px)', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' },
+    cardContainer: { display: 'flex', backgroundColor: CARD_BG, borderRadius: '15px', padding: '20px', marginBottom: '20px', boxShadow: '0 2px 5px rgba(0, 0, 0, 0.05)', cursor: 'pointer', transition: 'all 200ms ease' },
     levelTag: { fontSize: '12px', fontWeight: 600, padding: '4px 8px', borderRadius: '5px', color: CARD_BG, width: 'fit-content', marginTop: '5px', backgroundColor: ACCENT_COLOR_DARK },
 };
 
 const AssignmentCard = ({ assignment }) => {
     const navigate = useNavigate();
+    const [hovered, setHovered] = useState(false);
     return (
-        <div style={styles.cardContainer} onClick={() => navigate(`/assignment/${assignment.id}`)}>
+        <div 
+            style={{
+                ...styles.cardContainer,
+                transform: hovered ? 'translateY(-4px)' : 'translateY(0)',
+                boxShadow: hovered ? '0 6px 20px rgba(0, 0, 0, 0.1)' : '0 2px 5px rgba(0, 0, 0, 0.05)'
+            }} 
+            onClick={() => navigate(`/assignment/${assignment.id}`)}
+            onMouseEnter={() => setHovered(true)}
+            onMouseLeave={() => setHovered(false)}
+        >
             <div style={{ marginRight: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                 <div style={{ width: '30px', height: '30px', borderRadius: '50%', backgroundColor: ACCENT_COLOR_LIGHT, marginBottom: '10px' }}></div>
                 <div style={{ color: ACCENT_COLOR_DARK, fontWeight: 600, fontSize: '12px' }}>{assignment.tingkat}</div>
@@ -97,16 +117,19 @@ const DashboardPage = () => {
     const [assignments, setAssignments] = useState([]);
     const [leaderboard, setLeaderboard] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [openDropdown, setOpenDropdown] = useState(null);
-    const [selectedDifficulty, setSelectedDifficulty] = useState(null);
-    const [selectedJurusan, setSelectedJurusan] = useState(null);
+    const [openDropdown, setOpenDropdown] = useState(null); // 'jurusan' | 'mata' | 'tingkat' | null
+    const [hover, setHover] = useState(null);
+    const [hoverItem, setHoverItem] = useState(null);
+    const [selectedJurusan, setSelectedJurusan] = useState('');
+    const [selectedMataKuliah, setSelectedMataKuliah] = useState('');
+    const [selectedTingkat, setSelectedTingkat] = useState('');
 
     useEffect(() => {
         const token = localStorage.getItem('token');
         if (!token) return navigate('/login');
         fetch(`${BASE_API_URL}/tasks`, { headers: { 'Authorization': `Bearer ${token}` } })
             .then(res => res.json())
-            .then(data => { setAssignments(data); setLoading(false); })
+            .then(data => { setAssignments(Array.isArray(data) ? data : []); setLoading(false); })
             .catch(() => setLoading(false));
         setLeaderboard([{ rank: 1, name: "Azazel", points: 100 }, { rank: 2, name: "UIKing", points: 98 }, { rank: 3, name: "Agung", points: 88 }]);
     }, [navigate]);
@@ -116,11 +139,131 @@ const DashboardPage = () => {
             <AppNavbar activePage="assignment" />
             <div style={styles.mainContent}>
                 <div style={styles.assignmentArea}>
-                    <div style={styles.filterBar}>
-                       <button style={styles.filterButton} onClick={() => setOpenDropdown(openDropdown === 'jur' ? null : 'jur')}>{selectedJurusan || 'Jurusan'}</button>
-                       <button style={styles.filterButton} onClick={() => setOpenDropdown(openDropdown === 'diff' ? null : 'diff')}>{selectedDifficulty || 'Kesulitan'}</button>
+                    {/* UploadPage-like filter pills */}
+                    <div style={styles.pillsRow}>
+                        {/* Jurusan */}
+                        <div style={{ position: 'relative' }}>
+                            <div
+                                style={{ ...styles.pill, ...(hover === 'jurusan' ? styles.pillHover : {}) }}
+                                onMouseEnter={() => setHover('jurusan')}
+                                onMouseLeave={() => setHover(null)}
+                                onClick={() => setOpenDropdown(openDropdown === 'jurusan' ? null : 'jurusan')}
+                            >
+                                {selectedJurusan || 'Jurusan'}
+                            </div>
+                            {openDropdown === 'jurusan' && (
+                                <div style={styles.dropdown}>
+                                    <div
+                                        style={{ ...styles.dropdownItem, ...(hoverItem === 'jurusan-reset' ? styles.dropdownItemHover : {}) }}
+                                        onMouseEnter={() => setHoverItem('jurusan-reset')}
+                                        onMouseLeave={() => setHoverItem(null)}
+                                        onClick={() => { setSelectedJurusan(''); setSelectedMataKuliah(''); setOpenDropdown(null); }}
+                                    >
+                                        Semua Jurusan
+                                    </div>
+                                    {jurusanList.map(j => (
+                                        <div
+                                            key={j}
+                                            style={{ ...styles.dropdownItem, ...(hoverItem === j ? styles.dropdownItemHover : {}) }}
+                                            onMouseEnter={() => setHoverItem(j)}
+                                            onMouseLeave={() => setHoverItem(null)}
+                                            onClick={() => { setSelectedJurusan(j); setSelectedMataKuliah(''); setOpenDropdown(null); }}
+                                        >
+                                            {j}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Mata Kuliah */}
+                        <div style={{ position: 'relative' }}>
+                            <div
+                                style={{ ...styles.pill, ...(hover === 'mata' ? styles.pillHover : {}) }}
+                                onMouseEnter={() => setHover('mata')}
+                                onMouseLeave={() => setHover(null)}
+                                onClick={() => setOpenDropdown(openDropdown === 'mata' ? null : 'mata')}
+                            >
+                                {selectedMataKuliah || 'Mata Kuliah'}
+                            </div>
+                            {openDropdown === 'mata' && (
+                                <div style={styles.dropdown}>
+                                    <div
+                                        style={{ ...styles.dropdownItem, ...(hoverItem === 'mata-reset' ? styles.dropdownItemHover : {}) }}
+                                        onMouseEnter={() => setHoverItem('mata-reset')}
+                                        onMouseLeave={() => setHoverItem(null)}
+                                        onClick={() => { setSelectedMataKuliah(''); setOpenDropdown(null); }}
+                                    >
+                                        Semua Mata Kuliah
+                                    </div>
+                                    {(mataKuliahOptions[selectedJurusan] || []).map(m => (
+                                        <div
+                                            key={m}
+                                            style={{ ...styles.dropdownItem, ...(hoverItem === m ? styles.dropdownItemHover : {}) }}
+                                            onMouseEnter={() => setHoverItem(m)}
+                                            onMouseLeave={() => setHoverItem(null)}
+                                            onClick={() => { setSelectedMataKuliah(m); setOpenDropdown(null); }}
+                                        >
+                                            {m}
+                                        </div>
+                                    ))}
+                                    {!selectedJurusan && (
+                                        <div style={{ padding: 8, opacity: 0.6 }}>Pilih Jurusan dulu</div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Tingkat Kesulitan */}
+                        <div style={{ position: 'relative' }}>
+                            <div
+                                style={{ ...styles.pill, ...(hover === 'tingkat' ? styles.pillHover : {}) }}
+                                onMouseEnter={() => setHover('tingkat')}
+                                onMouseLeave={() => setHover(null)}
+                                onClick={() => setOpenDropdown(openDropdown === 'tingkat' ? null : 'tingkat')}
+                            >
+                                {selectedTingkat || 'Tingkat Kesulitan'}
+                            </div>
+                            {openDropdown === 'tingkat' && (
+                                <div style={styles.dropdown}>
+                                    <div
+                                        style={{ ...styles.dropdownItem, ...(hoverItem === 'tingkat-reset' ? styles.dropdownItemHover : {}) }}
+                                        onMouseEnter={() => setHoverItem('tingkat-reset')}
+                                        onMouseLeave={() => setHoverItem(null)}
+                                        onClick={() => { setSelectedTingkat(''); setOpenDropdown(null); }}
+                                    >
+                                        Semua Tingkat
+                                    </div>
+                                    {tingkatOptions.map(t => (
+                                        <div
+                                            key={t}
+                                            style={{ ...styles.dropdownItem, ...(hoverItem === t ? styles.dropdownItemHover : {}) }}
+                                            onMouseEnter={() => setHoverItem(t)}
+                                            onMouseLeave={() => setHoverItem(null)}
+                                            onClick={() => { setSelectedTingkat(t); setOpenDropdown(null); }}
+                                        >
+                                            {t}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
                     </div>
-                    {loading ? <p>Loading...</p> : assignments.map(a => <AssignmentCard key={a.id} assignment={a} />)}
+
+                    {/* Filtered assignments */}
+                    {loading ? (
+                        <p>Loading...</p>
+                    ) : (
+                        (assignments
+                            .filter(a => {
+                                const jurMatch = selectedJurusan ? (a.jurusan === selectedJurusan) : true;
+                                const mkVal = a.mata_kuliah ?? a.mataKuliah;
+                                const mkMatch = selectedMataKuliah ? (mkVal === selectedMataKuliah) : true;
+                                const tkMatch = selectedTingkat ? (a.tingkat === selectedTingkat) : true;
+                                return jurMatch && mkMatch && tkMatch;
+                            })
+                            .map(a => <AssignmentCard key={a.id ?? `${a.jurusan}-${a.mata_kuliah ?? a.mataKuliah}-${a.created_at ?? Math.random()}`} assignment={a} />))
+                    )}
                 </div>
                 <div style={styles.leaderboardArea}>
                     <h4 style={{textAlign:'center'}}>Weekly Leaderboard</h4>

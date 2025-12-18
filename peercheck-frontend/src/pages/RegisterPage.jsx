@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import loginPageIMG from "../assets/loginPageIMG.jpg";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 // --- 1. CONSTANTS ---
 const ACCENT_COLOR = "#4DF3C8";
@@ -154,6 +154,8 @@ const RegisterPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  const navigate = useNavigate();
+
   const isMobile = window.innerWidth <= 1024;
 
   // CRITICAL FIX: Ensure global body margin/padding is zeroed out
@@ -173,36 +175,46 @@ const RegisterPage = () => {
     setLoading(true);
     setError(null);
 
-    try {
-      // Ensure fields are present
-      if (!username || !email || !password) {
-        throw new Error("Please fill in all fields.");
-      }
+    try {
+      // Ensure fields are present
+      if (!username || !email || !password) {
+        throw new Error("Please fill in all fields.");
+      }
       
-      // FIX: Changed API endpoint from /api/auth/register to /api/register
-      const response = await fetch("http://localhost:4000/api/register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ 
+      // Fixed API endpoint to match backend route
+      const response = await fetch("http://localhost:4000/api/auth/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ 
             name: username, // Map frontend 'username' to backend 'name'
             email, 
             password 
         }),
-      });
+      });
 
-      const data = await response.json(); // This is the line that throws the JSON error
+      // Check if response is JSON before parsing
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        throw new Error("Server is not responding with JSON. Is the backend running?");
+      }
 
-      if (!response.ok) {
-        // If the backend returns an error (which is likely JSON if the route hits)
-        throw new Error(data.error || "Registration failed. Check API connectivity.");
-      }
+      const data = await response.json();
 
-      // Registration successful: save the token and notify
+      if (!response.ok) {
+        throw new Error(data.error || "Registration failed. Check API connectivity.");
+      }      // Registration successful: save the token and notify
       localStorage.setItem("token", data.token);
       console.log("Registration successful! JWT Token:", data.token);
-      setError("Registration successful! Redirecting to login..."); 
+      setError("Registration successful! You can now log in."); 
+
+      // If backend returned a token, store it and redirect to the login page
+      if (data && data.token) {
+        localStorage.setItem("token", data.token);
+        console.log("Registration successful! JWT Token:", data.token);
+        navigate("/login");
+      }
       
     } catch (err) {
       setError(err.message);
@@ -228,7 +240,7 @@ const RegisterPage = () => {
       >
         {/* LOGO POSITIONED ABSOLUTELY from the top-left corner */}
                         <div style={styles.logo}>
-                              <span style={{ color: ACCENT_COLOR }}>Hi!</span> PIRU
+                          <img src="/Logo.png" alt="PIRU Logo" style={{ height: 48, width: 'auto' }} />
                         </div>
 
         {/* Content Block */}

@@ -162,8 +162,9 @@ const PricingPage = () => {
         style={{
           display: 'flex',
           gap: '32px',
-          flexWrap: 'wrap',
+          flexWrap: 'nowrap',
           justifyContent: 'center',
+          alignItems: 'center',
         }}
       >
         <PricingCard

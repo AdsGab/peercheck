@@ -110,7 +110,7 @@ const PeeruLayout = ({ children, activeLink, hideRightBlock = false }) => {
             padding: `0 ${horizontalPadding}`,
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'space-between',
+            justifyContent: hideRightBlock ? 'center' : 'space-between',
             minHeight: 'calc(100vh - 80px - 50px)', 
             flexDirection: isTablet ? 'column' : 'row',
             textAlign: hideRightBlock || isTablet ? 'center' : 'left',
@@ -154,6 +154,7 @@ const PeeruLayout = ({ children, activeLink, hideRightBlock = false }) => {
 
             {/* Navbar (z-index: 100) */}
             <nav style={baseStyles.navbar}>
+                {/* Logo - Left */}
                 <div style={baseStyles.logoGroup}>
                     <img 
                         src="/Logo.png" 
@@ -162,33 +163,34 @@ const PeeruLayout = ({ children, activeLink, hideRightBlock = false }) => {
                     />
                 </div>
                 
-                <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '10px' : '20px' }}>
-                    {/* Navigation Links */}
-                    {!isMobile && (
-                        <div style={{ display: 'flex', gap: '30px', alignItems: 'center' }}>
-                            {navLinks.map(link => (
-                                <Link 
-                                    key={link} 
-                                    to={link === 'Home' ? '/home' : `/${link.toLowerCase()}`}
-                                    style={{
-                                        cursor: 'pointer',
-                                        textDecoration: 'none', 
-                                        color: link.toLowerCase() === activeLink ? PRIMARY_TEXT_COLOR : '#666',
-                                        fontSize: '15px', 
-                                        fontWeight: 600, 
-                                        borderBottom: link.toLowerCase() === activeLink ? `2px solid ${ACCENT_COLOR}` : 'none',
-                                        paddingBottom: '5px',
-                                        transition: 'color 0.2s, border-bottom 0.2s'
-                                    }}
-                                >
-                                    {link}
-                                </Link>
-                            ))}
-                        </div>
-                    )}
-                    
+                {/* Navigation Links - Center */}
+                {!isMobile && (
+                    <div style={{ display: 'flex', gap: '30px', alignItems: 'center', position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}>
+                        {navLinks.map(link => (
+                            <Link 
+                                key={link} 
+                                to={link === 'Home' ? '/home' : `/${link.toLowerCase()}`}
+                                style={{
+                                    cursor: 'pointer',
+                                    textDecoration: 'none', 
+                                    color: link.toLowerCase() === activeLink ? PRIMARY_TEXT_COLOR : '#666',
+                                    fontSize: '15px', 
+                                    fontWeight: 600, 
+                                    borderBottom: link.toLowerCase() === activeLink ? `2px solid ${ACCENT_COLOR}` : 'none',
+                                    paddingBottom: '5px',
+                                    transition: 'color 0.2s, border-bottom 0.2s'
+                                }}
+                            >
+                                {link}
+                            </Link>
+                        ))}
+                    </div>
+                )}
+                
+                {/* Auth Buttons - Right */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '10px' : '15px', marginLeft: 'auto' }}>
                     {/* Login Button */}
-                    <Link to="/login" style={{ ...baseStyles.navButton, backgroundColor: 'white', color: PRIMARY_TEXT_COLOR, border: '1px solid #ccc', marginRight: '10px' }}>
+                    <Link to="/login" style={{ ...baseStyles.navButton, backgroundColor: 'white', color: PRIMARY_TEXT_COLOR, border: '1px solid #ccc' }}>
                         Login
                     </Link>
                     {/* Sign Up Button */}

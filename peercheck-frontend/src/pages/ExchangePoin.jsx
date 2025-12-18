@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import useAuth from "../hooks/useAuth";
 
 {/*Sprint 1*/}
 const ExchangePoin = () => {
@@ -93,10 +94,7 @@ const currentRank =
         </nav>
 
         <div style={{ position: 'absolute', right: 28, top: '50%', transform: 'translateY(-50%)' }}>
-          <button style={{ display: 'flex', alignItems: 'center', gap: 12, background: '#0b6b58', color: '#fff', padding: '10px 18px', borderRadius: 30, border: 'none', cursor: 'pointer', fontWeight: 800 }} onMouseDown={(e) => e.preventDefault()}>
-            <span style={{ width: 28, height: 28, borderRadius: 14, background: '#d6b77a', color: '#063b2f', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 800 }}>👤</span>
-            <span>Hi, Anonymus</span>
-          </button>
+          <HiButton />
         </div>
       </header>
 
@@ -253,10 +251,10 @@ const currentRank =
       {[
         { name: "ShopeePay", logo: "/shopeepay.jpg" },
         { name: "Gopay", logo: "/gopay.png" },
-        { name: "Ovo", logo: "/ovo.png" },
-        { name: "Bank", logo: "/bank.png" },
+        { name: "OVO", logo: "/ovo.png" },
+        { name: "Bank Transfer", logo: "/bank.png" },
         { name: "Dana", logo: "/dana.png" },
-        { name: "Link Aja", logo: "/link aja.png" }
+        { name: "LinkAja", logo: "/link aja.png" }
       ].map((m) => (
         <button
           key={m.name}
@@ -364,5 +362,16 @@ const currentRank =
     </div>
   );
 };
+
+function HiButton() {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  return (
+    <button onMouseDown={(e) => e.preventDefault()} onClick={() => navigate('/profile', { state: { tab: 'edit' } })} style={{ display: 'flex', alignItems: 'center', gap: 12, background: '#0b6b58', color: '#fff', padding: '10px 18px', borderRadius: 30, border: 'none', cursor: 'pointer', fontWeight: 800 }}>
+      <span style={{ width: 28, height: 28, borderRadius: 14, background: '#d6b77a', color: '#063b2f', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 800 }}>👤</span>
+      <span>Hi, {user?.username || 'Anonymus'}</span>
+    </button>
+  );
+}
 
 export default ExchangePoin;

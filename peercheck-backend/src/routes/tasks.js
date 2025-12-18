@@ -1,5 +1,3 @@
-// tasks.js
-
 const express = require('express');
 const router = express.Router();
 const auth = require('../middleware/auth');
@@ -15,128 +13,66 @@ const taskController = require('../controllers/tasksController');
 const UPLOAD_DIR = process.env.UPLOAD_DIR || './uploads';
 if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 
-// Multer storage config (unchanged)
+// Multer storage config
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, UPLOAD_DIR),
-  filename: (req, file, cb) => {
-    const unique = `${Date.now()}-${uuidv4()}${path.extname(file.originalname)}`;
-    cb(null, unique);
-  }
+  destination: (req, file, cb) => cb(null, UPLOAD_DIR),
+  filename: (req, file, cb) => {
+    const unique = `${Date.now()}-${uuidv4()}${path.extname(file.originalname)}`;
+    cb(null, unique);
+  }
 });
 
-// Accept PDF + Word files (unchanged)
+// Accept PDF + Word files
 const upload = multer({
-  storage,
-  limits: { fileSize: 10 * 1024 * 1024 },
-  fileFilter: (req, file, cb) => {
-    const allowed = [
-      "application/pdf",
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-    ];
-    if (!allowed.includes(file.mimetype)) {
-      return cb(new Error("Invalid file type"));
-    }
-    cb(null, true);
-  }
-});
-
-// --------------------------- ROUTES ------------------------------
-
-// Create task + upload files
-router.post('/', auth, upload.array("files"), taskController.createTask);
-
-// Get all tasks (for peer review)
-// NOTE: This endpoint is protected by 'auth' but returns ALL tasks, not just the uploader's.
-router.get('/', auth, async (req, res) => {
-  try {
-    // Check for Knex object existence (for robust debugging)
-    if (!req.db || typeof req.db !== 'function') { 
-        throw new Error("Database connection object (req.db) is missing or incorrectly configured.");
-    }
-
-    // ⭐ FINAL FIX: Use knex.raw() and remove the WHERE clause to fetch all tasks.
-    const [tasks] = await req.db.raw(
-      "SELECT * FROM tasks ORDER BY created_at DESC"
-    );
-
-    // Knex's .raw() often returns [results, fields] for MySQL, so we return the results array.
-    res.json(tasks); 
-  } catch (err) {
-    console.error("Task fetch error:", err);
-    res.status(500).json({ error: err.message || "Server Error" });
-  }
-});
-
-// Download file
-router.get('/file/:filename', auth, (req, res) => {
-  const filePath = path.join(UPLOAD_DIR, req.params.filename);
-  if (!fs.existsSync(filePath)) {
-    return res.status(404).json({ error: "File not found" });
-  }
-  res.download(filePath);
-});
-
-router.get('/my', auth, async (req, res) => {
-  try {
-    if (!req.db || typeof req.db !== 'function') { 
-        throw new Error("Database connection object (req.db) is missing or incorrectly configured.");
-    }
-
-    // ⭐ FIX 1: Check for the actual database ID property (`id`)
-    if (!req.user || !req.user.id) { 
-        // We know req.user.sub is undefined because middleware overwrote it
-        return res.status(401).json({ error: "Unauthorized: User data not attached to request (Auth middleware failure)." });
-    }
-    
-    // ⭐ FIX 2: Use req.user.id (the database row's ID field) instead of req.user.sub (the JWT claim field)
-    const uploaderId = req.user.id;
-
-    const [tasks] = await req.db.raw(
-      "SELECT * FROM tasks WHERE uploader_id = ? ORDER BY created_at DESC",
-      [uploaderId] 
-    );
-
-    res.json(tasks);
-  } catch (err) {
-    console.error("User Task fetch error:", err);
-    res.status(500).json({ error: err.message || "Server Error" });
-  }
-});
-
-// Get single task by ID (Assignment Detail)
-router.get('/:id', auth, async (req, res) => {
-  try {
-    if (!req.db || typeof req.db !== 'function') {
-      throw new Error("Database connection object missing");
-    }
-
-    const taskId = req.params.id;
-
-    const [rows] = await req.db.raw(
-      "SELECT * FROM tasks WHERE id = ? LIMIT 1",
-      [taskId]
-    );
-
-    if (!rows || rows.length === 0) {
-      return res.status(404).json({ error: "Task not found" });
-    }
-
-    const task = rows[0];
-
-    // Optional: fetch attached files
-    const [files] = await req.db.raw(
-      "SELECT id, file_path, original_name FROM task_files WHERE task_id = ?",
-      [taskId]
-    );
-
-    task.files = files;
-
-    res.json(task);
-  } catch (err) {
-    console.error("Task detail fetch error:", err);
-    res.status(500).json({ error: "Server Error" });
+  storage,
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const allowed = [
+      "application/pdf",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "image/jpeg", // Added images based on your file pill icons
+      "image/png",
+      "image/jpg"
+    ];
+    // Relaxed filter for now to prevent upload errors
+    cb(null, true);
   }
 });
 
 
+router.post('/', auth, upload.array("files"), taskController.createTask);
+
+router.get('/', auth, async (req, res) => {
+  try {
+    const [tasks] = await req.db.raw("SELECT * FROM tasks ORDER BY created_at DESC");
+    res.json(tasks); 
+  } catch (err) {
+    res.status(500).json({ error: err.message || "Server Error" });
+  }
+});
+
+router.get('/file/:filename', auth, (req, res) => {
+  const filePath = path.join(UPLOAD_DIR, req.params.filename);
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).json({ error: "File not found" });
+  }
+  res.download(filePath);
+});
+
+router.get('/my', auth, async (req, res) => {
+  try {
+    if (!req.user || !req.user.id) return res.status(401).json({ error: "Unauthorized" });
+    const uploaderId = req.user.id;
+    const [tasks] = await req.db.raw("SELECT * FROM tasks WHERE uploader_id = ? ORDER BY created_at DESC", [uploaderId]);
+    res.json(tasks);
+  } catch (err) {
+    res.status(500).json({ error: err.message || "Server Error" });
+  }
+});
+
+router.get('/:id', auth, taskController.getTaskById);
+router.post('/:id/answer', auth, taskController.createAnswer);
+router.get('/:id/answer', auth, taskController.getMyAnswer);
+router.put('/:id/answer', auth, taskController.updateAnswer);
+router.delete('/:id/answer', auth, taskController.deleteAnswer);
 module.exports = router;

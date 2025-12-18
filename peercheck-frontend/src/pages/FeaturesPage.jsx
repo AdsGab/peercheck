@@ -69,20 +69,6 @@ const FeaturesPage = () => {
     return (
         <PeeruLayout activeLink="features">
 
-            {/* PAGE HEADER */}
-            <h4
-                style={{
-                    color: ACCENT_COLOR,
-                    fontSize: '14px',
-                    fontWeight: 700,
-                    letterSpacing: '1px',
-                    textTransform: 'uppercase',
-                    marginTop: '70px',
-                    marginBottom: '12px',
-                }}
-            >
-                Platform Capabilities
-            </h4>
 
             <h1
                 style={{

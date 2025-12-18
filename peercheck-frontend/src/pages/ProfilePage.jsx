@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import useAuth from "../hooks/useAuth";
 
 const ProfilePage = () => {
 
+  const { user, logout } = useAuth();
   const [hoverMission, setHoverMission] = useState(null);
   const [hoverGoBtn, setHoverGoBtn] = useState(null);
   const [hoverPill, setHoverPill] = useState(null);
@@ -10,13 +12,13 @@ const ProfilePage = () => {
   const styles = {
   page: { fontFamily:"Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto", minHeight:"100vh", width:"100vw", display:"flex", flexDirection:"column", background:"#ffffff", color:"#0b1a1a" },
 
-  header: { display:"flex", alignItems:"center", justifyContent:"space-between", position:"relative", padding:"18px 28px", borderBottom:"1px solid #e6e6e6" },
+  header: { display:"flex", alignItems:"center", justifyContent:"space-between", position:"relative", padding:"18px 28px", borderBottom:"1px solid #e6e6e6", background:"#ffffff", width:"100vw", boxSizing:"border-box" },
 
   logo: { display:"flex", alignItems:"center", gap:10, fontWeight:700, color:"#0b6b58" },
 
   nav: { display:"flex", gap:18, alignItems:"center", position:"absolute", left:"50%", transform:"translateX(-50%)" },
 
-  content: { maxWidth:1200, margin:"28px auto", padding:"0 18px", boxSizing:"border-box" },
+  content: { maxWidth:1200, margin:"28px auto", padding:"0 18px", boxSizing:"border-box", width:"100%", position:"relative", zIndex:1 },
 
   topRow: { display:"flex", justifyContent:"space-between", alignItems:"center", gap:12 },
 
@@ -80,6 +82,7 @@ const ProfilePage = () => {
   const [uploadMsg, setUploadMsg] = useState("");
   const [previewUrl, setPreviewUrl] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const [userAssignments, setUserAssignments] = useState([]);
 
   // Example data for assignments and answers
   const sampleAssignments = [
@@ -148,6 +151,26 @@ const ProfilePage = () => {
       setShowRoadmap(false);
     }
   }, [activeSection, showRoadmap]);
+
+  // Fetch user tasks
+  useEffect(() => {
+    const fetchUserTasks = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+        const res = await fetch('http://localhost:4000/api/tasks', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          setUserAssignments(data);
+        }
+      } catch (err) {
+        console.error('Error fetching tasks:', err);
+      }
+    };
+    fetchUserTasks();
+  }, []);
 
   // Create object URL for preview when `selectedFile` changes and clean up previous URL
   useEffect(() => {
@@ -258,16 +281,13 @@ const ProfilePage = () => {
         </div>
 
         <nav style={styles.nav}>
-          <Link to="/" style={{ textDecoration: "none", color: "#0b6b58", fontWeight: 600 }}>Assignment</Link>
+          <Link to="/dashboard" style={{ textDecoration: "none", color: "#0b6b58", fontWeight: 700 }}>Assignment</Link>
           <Link to="/upload" style={{ textDecoration: "none", color: "#0b6b58", fontWeight: 700 }}>Upload</Link>
           <Link to="/profile" style={{ textDecoration: "none", color: "#000", fontWeight: 700 }}>Profile</Link>
         </nav>
 
         <div style={{ position: 'absolute', right: 28, top: '50%', transform: 'translateY(-50%)' }}>
-          <button onMouseDown={(e) => e.preventDefault()} onClick={() => setActiveSection('edit')} style={styles.hiButton} aria-label="Open profile edit">
-            <span style={styles.hiIcon}>👤</span>
-            <span>Hi, Anonymus</span>
-          </button>
+          <HiButton setActiveSection={setActiveSection} />
         </div>
       </header>
 
@@ -326,48 +346,59 @@ const ProfilePage = () => {
           <div style={{ display: 'flex', justifyContent: 'center' }}>
             <div style={{ width: '100%', maxWidth: 900, display: 'flex', flexDirection: 'column', gap: 12 }}>
               
-              {sampleAssignments.map(a => (
-                <div key={a.id} style={{ background: '#e7fff6', borderRadius: 12, padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div>
-                    <div style={{ fontWeight: 800 }}>{a.title}</div>
-                    <div style={{ fontSize: 13, color: '#333', marginTop: 6 }}>{a.course} • {a.time}</div>
-                  </div>
-                  <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                    <div style={{ fontWeight: 700 }}>{a.points} Poin</div>
-                    <button style={styles.goBtn} onClick={() => window.location.href = '/upload'}>Show</button>
-                  </div>
-                </div>
-
-                {/* File previews (mock) */}
-                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                  {a.files.map(f => (
-                    <div key={f.id} style={{ width: 120, borderRadius: 8, background: '#fff', padding: 8, boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'center' }}>
-                      <div style={{ width: 88, height: 60, background: '#f3f3f3', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-                        {f.type === 'image' ? (
-                          <img src={f.src || '/assets/file-placeholder.png'} alt={f.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                        ) : (
-                          <div style={{ fontSize: 24 }}>{f.type === 'pdf' ? '📄' : f.type === 'zip' ? '🗜️' : f.type === 'apk' ? '📱' : '📁'}</div>
-                        )}
+              {(userAssignments.length > 0 ? userAssignments : sampleAssignments).map(a => {
+                const title = a.title || `${a.jurusan || ''}${a.jurusan && a.mata_kuliah ? ' - ' : ''}${a.mata_kuliah || ''}` || 'Assignment';
+                const course = a.course || a.mata_kuliah || '';
+                const time = a.time || (a.created_at ? new Date(a.created_at).toLocaleString() : '');
+                const points = typeof a.points === 'number' ? a.points : 20;
+                const files = Array.isArray(a.files) ? a.files : [];
+                const reviewers = Array.isArray(a.reviewers) ? a.reviewers : [];
+                const reviewsCount = typeof a.reviewsCount === 'number' ? a.reviewsCount : (reviewers.length || 0);
+                return (
+                  <div key={a.id} style={{ background: '#e7fff6', borderRadius: 12, padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div>
+                        <div style={{ fontWeight: 800 }}>{title}</div>
+                        <div style={{ fontSize: 13, color: '#333', marginTop: 6 }}>{course}{time ? ` • ${time}` : ''}</div>
                       </div>
-                      <div style={{ fontSize: 12, fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', width: '100%', textAlign: 'center' }}>{f.name}</div>
-                      <div style={{ fontSize: 11, color: '#666' }}>{f.size}</div>
+                      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                        <div style={{ fontWeight: 700 }}>{points} Poin</div>
+                        <button style={styles.goBtn} onClick={() => navigate('/upload')}>Show</button>
+                      </div>
                     </div>
-                  ))}
-                </div>
 
-                {/* Reviewers info */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                    {a.reviewers.slice(0, 5).map((r, idx) => (
-                      <div key={idx} title={r} style={{ width: 28, height: 28, borderRadius: 6, background: '#063b2f', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700 }}>{r}</div>
-                    ))}
-                    {a.reviewsCount > 5 && <div style={{ fontSize: 12, color: '#333' }}>+{a.reviewsCount - 5} more</div>}
+                    {files.length > 0 && (
+                      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                        {files.map((f, idx) => (
+                          <div key={f.id ?? idx} style={{ width: 120, borderRadius: 8, background: '#fff', padding: 8, boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'center' }}>
+                            <div style={{ width: 88, height: 60, background: '#f3f3f3', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                              {f.type === 'image' ? (
+                                <img src={f.src || '/assets/file-placeholder.png'} alt={f.name || f.filename || 'file'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                              ) : (
+                                <div style={{ fontSize: 24 }}>📄</div>
+                              )}
+                            </div>
+                            <div style={{ fontSize: 12, fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', width: '100%', textAlign: 'center' }}>{f.name || f.filename || 'file'}</div>
+                            {f.size && (<div style={{ fontSize: 11, color: '#666' }}>{f.size}</div>)}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {(reviewers.length > 0 || reviewsCount > 0) && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                          {reviewers.slice(0, 5).map((r, idx) => (
+                            <div key={idx} title={r} style={{ width: 28, height: 28, borderRadius: 6, background: '#063b2f', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700 }}>{r}</div>
+                          ))}
+                          {reviewsCount > 5 && <div style={{ fontSize: 12, color: '#333' }}>+{reviewsCount - 5} more</div>}
+                        </div>
+                        <div style={{ marginLeft: 'auto', fontSize: 13, color: '#333' }}>{reviewsCount} Reviews</div>
+                      </div>
+                    )}
                   </div>
-                  <div style={{ marginLeft: 'auto', fontSize: 13, color: '#333' }}>{a.reviewsCount} Reviews</div>
-                </div>
-              </div>
-            ))}
+                );
+              })}
             </div>
           </div>
         )}
@@ -406,8 +437,9 @@ const ProfilePage = () => {
         )}
 
 {/*Sprint 2*/}
-        {activeSection === 'edit' && (
-  <div style={{ background:"#ffffff", padding:24, borderRadius:16, boxShadow:"0 12px 28px rgba(0,0,0,0.12)", maxWidth:600, display:"flex", flexDirection:"column", gap:18 }}>
+          {activeSection === 'edit' && (
+        <div style={{ display:'flex', justifyContent:'center' }}>
+          <div style={{ background:"#ffffff", padding:24, borderRadius:16, boxShadow:"0 12px 28px rgba(0,0,0,0.12)", maxWidth:600, width:'100%', display:"flex", flexDirection:"column", gap:18 }}>
     
     {/* AVATAR */}
     <div style={{ display:"flex", gap:16, alignItems:"center" }}>
@@ -418,7 +450,7 @@ const ProfilePage = () => {
       )}
 
       <div>
-        <div style={{ fontWeight:800, fontSize:18, color:"#063b2f" }}>Hi, Anonymus</div>
+        <div style={{ fontWeight:800, fontSize:18, color:"#063b2f" }}>Hi, {user?.username || 'Anonymus'}</div>
 
         <button
           onClick={() => setShowUploadModal(true)}
@@ -432,9 +464,9 @@ const ProfilePage = () => {
     </div>
 
     {/* INPUTS */}
-    <input placeholder="Name" defaultValue="Anonymus" style={{ padding:14, borderRadius:12, border:"1px solid #d4e7df", background:"#f7fffc", color:"#063b2f", fontWeight:600, boxShadow:"0 3px 10px rgba(0,0,0,0.06)" }} />
+    <input placeholder="Name" defaultValue={user?.username || "Anonymus"} style={{ padding:14, borderRadius:12, border:"1px solid #d4e7df", background:"#f7fffc", color:"#063b2f", fontWeight:600, boxShadow:"0 3px 10px rgba(0,0,0,0.06)" }} />
 
-    <input placeholder="Email" defaultValue="anonymus@gmail.com" style={{ padding:14, borderRadius:12, border:"1px solid #d4e7df", background:"#f7fffc", color:"#063b2f", fontWeight:600, boxShadow:"0 3px 10px rgba(0,0,0,0.06)" }} />
+    <input placeholder="Email" defaultValue={user?.email || "anonymus@gmail.com"} style={{ padding:14, borderRadius:12, border:"1px solid #d4e7df", background:"#f7fffc", color:"#063b2f", fontWeight:600, boxShadow:"0 3px 10px rgba(0,0,0,0.06)" }} />
 
     <input placeholder="Password" type="password" defaultValue="password1234" style={{ padding:14, borderRadius:12, border:"1px solid #d4e7df", background:"#f7fffc", color:"#063b2f", fontWeight:600, boxShadow:"0 3px 10px rgba(0,0,0,0.06)" }} />
 
@@ -450,7 +482,7 @@ const ProfilePage = () => {
       </button>
 
       <button
-        onClick={() => navigate('/login')}
+        onClick={() => { try { logout && logout(); } catch(_) {}; localStorage.removeItem('token'); navigate('/login'); }}
         style={{ flex:1, padding:"12px 18px", borderRadius:14, background:"#fff", color:"#063b2f", border:"1px solid #c7d8d3", fontWeight:800, cursor:"pointer", transition:"all 240ms ease", boxShadow:"0 4px 12px rgba(0,0,0,0.1)" }}
         onMouseEnter={(e)=> e.target.style.transform="translateY(-3px)"}
         onMouseLeave={(e)=> e.target.style.transform="translateY(0px)"}
@@ -461,6 +493,7 @@ const ProfilePage = () => {
 
     {uploadMsg && (<div style={{ fontSize:13, color:"#444", marginTop:6 }}>{uploadMsg}</div>)}
 
+  </div>
   </div>
 )}
 
@@ -525,7 +558,7 @@ const ProfilePage = () => {
     }
     onMouseEnter={() => setHoverGoBtn("upload")}
     onMouseLeave={() => setHoverGoBtn(null)}
-    onClick={() => { window.location.href = "/upload"; }}
+    onClick={() => { navigate("/upload"); }}
   >
     Go To Page!
   </button>
@@ -847,5 +880,15 @@ function StarRating({ avg = 0 }) {
         </span>
       ))}
     </div>
+  );
+}
+
+function HiButton({ setActiveSection }) {
+  const { user } = useAuth();
+  return (
+    <button onMouseDown={(e) => e.preventDefault()} onClick={() => setActiveSection('edit')} style={{ display:"flex", alignItems:"center", gap:12, background:"#0b6b58", color:"#fff", padding:"10px 18px", borderRadius:30, border:"none", cursor:"pointer", fontWeight:800, outline:"none", boxShadow:"none" }} aria-label="Open profile edit">
+      <span style={{ width:28, height:28, borderRadius:14, background:"#d6b77a", color:"#063b2f", display:"inline-flex", alignItems:"center", justifyContent:"center", fontSize:14, fontWeight:800 }}>👤</span>
+      <span>Hi, {user?.username || 'Anonymus'}</span>
+    </button>
   );
 }

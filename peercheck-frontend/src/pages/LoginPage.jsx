@@ -12,31 +12,9 @@ const CARD_BG = "#ffffff";
 const INPUT_BG = "#e8e8e8";
 const OVERLAY_COLOR = "rgba(29, 29, 29, 0.7)";
 
-// --- 2. SVG ICON (Unchanged) ---
-const GoogleIcon = () => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    viewBox="0 0 24 24"
-    fill="currentColor"
-    style={{ width: "20px", height: "20px", marginRight: "10px" }}
-  >
-    <path
-      d="M12.000 4.750c1.884 0 3.528.665 4.877 1.944l3.125-3.125C17.653 1.488 14.934.5 12.000.5c-2.934 0-5.653.988-7.978 2.923l3.125 3.125C8.472 5.415 10.116 4.750 12.000 4.750z"
-      fill="#F4B400"
-    />
-    <path
-      d="M4.022 9.750c-.17.58-.266 1.185-.266 1.815 0 .63.096 1.235.266 1.815l-3.125 3.125c-.482-1.094-.766-2.327-.766-3.715 0-1.388.284-2.621.766-3.715L4.022 9.750z"
-      fill="#DB4437"
-    />
-    <path
-      d="M12.000 19.250c-1.636 0-3.197-.611-4.409-1.748l-3.125 3.125c2.325 1.935 5.044 2.923 7.534 2.923 2.871 0 5.617-.968 7.542-2.923l-3.125-3.125c-1.212 1.137-2.773 1.748-4.409 1.748z"
-      fill="#0F9D58"
-    />
-    <path
-      d="M19.978 14.250c.17-.58.266-1.185-.266 1.815 0-.63-.096-1.235-.266-1.815l3.125-3.125c.482 1.094.766 2.327.766 3.715 0 1.388-.284 2.621-.766 3.715L19.978 14.250z"
-      fill="#4285F4"
-    />
-  </svg>
+// Use the public asset `public/Google.png` so browsers render the icon reliably
+const GoogleIcon = ({ style }) => (
+  <img src="/Google.png" alt="Google" style={{ width: 20, height: 20, marginRight: 10, ...style }} />
 );
 
 // --- 3. STYLES (Unchanged) ---
@@ -69,14 +47,17 @@ const styles = {
     padding: "60px",
     boxSizing: "border-box",
   },
-  logo: {
-    position: "absolute",
-    top: "30px",
-    left: "30px",
-    color: "white",
-    fontSize: "20px",
-    fontWeight: "bold",
-  },
+  logo: {
+    position: "absolute",
+    top: "30px",
+    left: "30px",
+    display: "flex",
+    alignItems: "center",
+    gap: "10px",
+    color: "white",
+    fontSize: "20px",
+    fontWeight: "bold",
+  },
   contentBlock: {
     color: "white",
     maxWidth: "80%",
@@ -226,9 +207,9 @@ const LoginPage = () => {
         }}
       >
         {/* LOGO POSITIONED ABSOLUTELY from the top-left corner */}
-        <div style={styles.logo}>
-          <span style={{ color: ACCENT_COLOR }}>Hi!</span> PIRU
-        </div>
+        <div style={styles.logo}>
+          <img src="/Logo.png" alt="PIRU" style={{ height: 48, width: 'auto' }} />
+        </div>
 
         {/* Content Block: Uses margin-top to achieve desired low position */}
         <div style={styles.contentBlock}>
@@ -348,20 +329,22 @@ const LoginPage = () => {
           </div>
 
           {/* Google Button */}
-          <button
-            type="button"
-            style={{
-              ...styles.buttonBase,
-              backgroundColor: "black",
-              color: "white",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <GoogleIcon />
-            Continue With Google
-          </button>
+          <button
+            type="button"
+            onClick={() => alert('Google sign-in is still in development.')}
+            style={{
+              ...styles.buttonBase,
+              backgroundColor: "black",
+              color: "white",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 10,
+            }}
+          >
+            <GoogleIcon />
+            Continue With Google
+          </button>
 
           {/* Sign Up Link */}
           <p
