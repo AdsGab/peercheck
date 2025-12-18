@@ -82,6 +82,11 @@ const LandingPage = () => {
   return (
     <PeeruLayout activeLink="home">
 
+      {/* Subtitle */}
+      <div style={styles.subtitle}>
+        Upload – Review – Feedback
+      </div>
+
       {/* Hero */}
       <h1 style={styles.heroTitle}>
         Make sure to have good <br />

@@ -14,6 +14,7 @@ import PricingPage from "./pages/PricingPage";
 import ExchangePoin from "./pages/ExchangePoin";
 import DashboardPage from "./pages/DashboardPage";
 import AssignmentDetailPage from "./pages/AssignmentDetailPage";
+import EditProfilePage from "./pages/EditProfilePage";
 import "./index.css";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
@@ -32,6 +33,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
           <Route path="/assignment/:id" element={<AssignmentDetailPage />} />
           <Route path="/upload" element={<UploadPage />} />
           <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/edit-profile" element={<EditProfilePage />} />
           <Route path="/exchangepoin" element={<ExchangePoin />} />
           <Route path="*" element={<h1 style={{ textAlign: "center", marginTop: "50px" }}>404 - Page Not Found</h1>} />
         </Routes>

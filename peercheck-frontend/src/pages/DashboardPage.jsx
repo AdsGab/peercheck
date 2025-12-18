@@ -39,12 +39,40 @@ const uploadPageStyles = {
 
 function HiButton() {
     const navigate = useNavigate();
-    const { user } = useAuth();
+    const { user, logout } = useAuth();
+    const [showDropdown, setShowDropdown] = useState(false);
+
     return (
-        <button onClick={() => navigate('/profile', { state: { tab: 'edit' } })} style={uploadPageStyles.hiButton}>
-            <span style={uploadPageStyles.hiIcon}>👤</span>
-            <span>Hi, {user?.username || 'Anonymus'}</span>
-        </button>
+        <div style={{ position: 'relative' }}>
+            <button 
+                onClick={() => setShowDropdown(!showDropdown)} 
+                style={uploadPageStyles.hiButton}
+            >
+                <span style={uploadPageStyles.hiIcon}>👤</span>
+                <span>Hi, {user?.username || 'Anonymus'}</span>
+            </button>
+            
+            {showDropdown && (
+                <div style={{ position: 'absolute', top: '110%', right: 0, background: '#fff', borderRadius: 12, boxShadow: '0 4px 12px rgba(0,0,0,0.15)', padding: 8, minWidth: 160, zIndex: 1000 }}>
+                    <div 
+                        onClick={() => navigate('/edit-profile')}
+                        style={{ padding: '10px 12px', cursor: 'pointer', fontWeight: 600, color: '#063b2f', borderRadius: 8, transition: 'background 0.2s' }}
+                        onMouseEnter={(e) => e.target.style.background = '#e7fff6'}
+                        onMouseLeave={(e) => e.target.style.background = 'transparent'}
+                    >
+                        Edit Profile
+                    </div>
+                    <div 
+                        onClick={() => { try { logout && logout(); } catch (_) { }; localStorage.removeItem('token'); navigate('/login'); }}
+                        style={{ padding: '10px 12px', cursor: 'pointer', fontWeight: 600, color: '#d32f2f', borderRadius: 8, transition: 'background 0.2s' }}
+                        onMouseEnter={(e) => e.target.style.background = '#ffebee'}
+                        onMouseLeave={(e) => e.target.style.background = 'transparent'}
+                    >
+                        Log Out
+                    </div>
+                </div>
+            )}
+        </div>
     );
 }
 
@@ -131,7 +159,20 @@ const DashboardPage = () => {
             .then(res => res.json())
             .then(data => { setAssignments(Array.isArray(data) ? data : []); setLoading(false); })
             .catch(() => setLoading(false));
-        setLeaderboard([{ rank: 1, name: "Azazel", points: 100 }, { rank: 2, name: "UIKing", points: 98 }, { rank: 3, name: "Agung", points: 88 }]);
+        
+        fetch(`${BASE_API_URL}/users/leaderboard`, { headers: { 'Authorization': `Bearer ${token}` } })
+            .then(res => res.json())
+            .then(data => {
+                if (Array.isArray(data)) {
+                    const formatted = data.map((u, idx) => ({
+                        rank: idx + 1,
+                        name: u.name,
+                        points: u.contribution_points
+                    }));
+                    setLeaderboard(formatted);
+                }
+            })
+            .catch(err => console.error("Leaderboard fetch error:", err));
     }, [navigate]);
 
     return (
@@ -266,7 +307,7 @@ const DashboardPage = () => {
                     )}
                 </div>
                 <div style={styles.leaderboardArea}>
-                    <h4 style={{textAlign:'center'}}>Weekly Leaderboard</h4>
+                    <h4 style={{textAlign:'center'}}>Poins Leaderboard</h4>
                     {leaderboard.map(i => <div key={i.rank} style={{padding:'10px 0', borderBottom:'1px solid #fff'}}>{i.rank}. {i.name} - {i.points}pt</div>)}
                 </div>
             </div>

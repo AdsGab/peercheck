@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
 import useAuth from "../hooks/useAuth"; 
 
 const BASE_API_URL = "http://localhost:4000/api";
@@ -21,10 +21,38 @@ const uploadPageStyles = {
     hiIcon: { width: 28, height: 28, borderRadius: 14, background: '#d6b77a', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: '#063b2f' },
 };
 
+function HiButton() {
+    const navigate = useNavigate();
+    const { user } = useAuth();
+    return (
+        <button onClick={() => navigate('/profile', { state: { tab: 'edit' } })} style={uploadPageStyles.hiButton}>
+            <span style={uploadPageStyles.hiIcon}>👤</span>
+            <span>Hi, {user?.username || 'Guest'}</span>
+        </button>
+    );
+}
+
+function AppNavbar({ activePage }) {
+    const linkStyle = (page) => ({ ...uploadPageStyles.link, textDecoration: 'none', color: activePage === page ? '#000' : uploadPageStyles.link.color, fontWeight: 700 });
+    return (
+        <header style={uploadPageStyles.header}>
+            <div style={uploadPageStyles.logo}><img src="/Logo.png" alt="PIRU" style={{ height: 50, objectFit: 'contain' }} /></div>
+            <nav style={uploadPageStyles.nav}>
+                <Link to="/dashboard" style={linkStyle('assignment')}>Assignment</Link>
+                <Link to="/upload" style={linkStyle('upload')}>Upload</Link>
+                <Link to="/profile" style={linkStyle('profile')}>Profile</Link>
+            </nav>
+            <div style={{ position: 'absolute', right: 28, top: '50%', transform: 'translateY(-50%)' }}><HiButton /></div>
+        </header>
+    );
+}
+
 const AssignmentDetailPage = () => {
     const { id } = useParams();
+    const location = useLocation();
     const { user } = useAuth() || {};
     const navigate = useNavigate();
+    const uploaderId = location.state?.uploaderId;
     
     // Data State
     const [task, setTask] = useState(null);
@@ -38,6 +66,9 @@ const AssignmentDetailPage = () => {
 
     // ⭐ NEW: Modal State
     const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [showOtherAnswers, setShowOtherAnswers] = useState(false);
+    const [otherAnswers, setOtherAnswers] = useState([]);
+    const [loadingAnswers, setLoadingAnswers] = useState(false);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -101,6 +132,28 @@ const AssignmentDetailPage = () => {
         setIsEditing(true);
     };
 
+    // ⭐ NEW: Fetch all answers for this task (excluding current user)
+    const handleShowOtherAnswers = async () => {
+        setLoadingAnswers(true);
+        const token = localStorage.getItem('token');
+        try {
+            const res = await fetch(`${BASE_API_URL}/tasks/${id}`, { 
+                headers: { 'Authorization': `Bearer ${token}` } 
+            });
+            const taskData = await res.json();
+            
+            // Filter out current user's answer
+            const filtered = taskData.answers?.filter(ans => ans.user_id !== user?.userId) || [];
+            setOtherAnswers(filtered);
+            setShowOtherAnswers(true);
+        } catch (err) { 
+            console.error(err);
+            alert("Error loading answers");
+        } finally {
+            setLoadingAnswers(false);
+        }
+    };
+
     const getFileIcon = (filename) => {
         if (!filename) return "📄";
         const ext = filename.split('.').pop().toLowerCase();
@@ -129,7 +182,15 @@ const AssignmentDetailPage = () => {
         btnUpload: { backgroundColor: ACCENT_COLOR_DARK, color: '#fff', border: 'none', padding: '12px 30px', borderRadius: '25px', fontWeight: 700, fontSize: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', transition: 'all 200ms ease' },
         btnEdit: { backgroundColor: ACCENT_COLOR_DARK, color: '#fff', border: 'none', padding: '12px 30px', borderRadius: '25px', fontWeight: 700, fontSize: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', transition: 'all 200ms ease' },
         btnDelete: { backgroundColor: 'transparent', color: ACCENT_COLOR_DARK, border: '1px solid ' + ACCENT_COLOR_DARK, padding: '12px 30px', borderRadius: '25px', fontWeight: 700, fontSize: '14px', cursor: 'pointer', transition: 'all 200ms ease' },
-        showOtherLink: { position: 'absolute', right: 0, bottom: 10, textDecoration: 'underline', fontWeight: 700, fontSize: '14px', color: ACCENT_COLOR_DARK, cursor: 'pointer' },
+        showOtherLink: { position: 'absolute', right: 0, bottom: 10, textDecoration: 'underline', fontWeight: 700, fontSize: '14px', color: ACCENT_COLOR_DARK, cursor: 'pointer', border: 'none', background: 'transparent', padding: 0 },
+        
+        // ⭐ OTHER ANSWERS MODAL STYLES
+        answersModalOverlay: { position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000, padding: '20px', boxSizing: 'border-box' },
+        answersModalBox: { width: '100%', maxWidth: '900px', backgroundColor: CARD_BG, borderRadius: '15px', padding: '30px', maxHeight: '80vh', overflowY: 'auto', boxShadow: '0 5px 15px rgba(0,0,0,0.3)' },
+        answersModalHeader: { fontSize: '20px', fontWeight: '800', marginBottom: '20px', color: ACCENT_COLOR_DARK, display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
+        closeBtn: { background: 'transparent', border: 'none', fontSize: '24px', cursor: 'pointer', color: ACCENT_COLOR_DARK, padding: 0 },
+        answerCard: { backgroundColor: BG_COLOR, borderRadius: '12px', padding: '18px', marginBottom: '15px', borderLeft: `4px solid ${ACCENT_COLOR_DARK}` },
+        answerContent: { fontSize: '14px', lineHeight: '1.6', color: TEXT_COLOR_PRIMARY, marginTop: '10px', whiteSpace: 'pre-wrap' },
         
         // ⭐ MODAL STYLES
         modalOverlay: { position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 },
@@ -143,27 +204,14 @@ const AssignmentDetailPage = () => {
     if (loading) return <div style={{padding:50, textAlign:'center'}}>Loading...</div>;
     if (!task) return <div style={{padding:50, textAlign:'center'}}>Task not found</div>;
 
-    const linkStyle = (page) => ({ ...uploadPageStyles.link, color: page === 'assignment' ? '#000' : uploadPageStyles.link.color, fontWeight: 700 });
+    // Check if current user is the uploader
+    const isUploader = user?.userId === task.uploader_id;
+
+    
 
     return (
         <div style={styles.page}>
-            <header style={uploadPageStyles.header}>
-                <div style={uploadPageStyles.logo}>
-                    <img src="/Logo.png" alt="PIRU" style={{ height: 50, objectFit: 'contain' }} />
-                </div>
-                <nav style={uploadPageStyles.nav}>
-                    <Link to="/dashboard" style={linkStyle('assignment')}>Assignment</Link>
-                    <Link to="/upload" style={linkStyle('upload')}>Upload</Link>
-                    <Link to="/profile" style={linkStyle('profile')}>Profile</Link>
-                </nav>
-                <button 
-                    style={uploadPageStyles.hiButton}
-                    onClick={() => navigate('/profile', { state: { tab: 'edit' } })}
-                >
-                    <span style={uploadPageStyles.hiIcon}>👤</span>
-                    <span>Hi, {user?.username || "Guest"}</span>
-                </button>
-            </header>
+            <AppNavbar activePage="assignment" />
 
             <main style={styles.mainContent}>
                 <div style={styles.topStrip}>
@@ -191,7 +239,24 @@ const AssignmentDetailPage = () => {
                 </div>
 
                 <div style={styles.answerArea}>
-                    {!myAnswer || isEditing ? (
+                    {isUploader ? (
+                        <div style={{ textAlign: 'center', padding: '40px 20px', color: TEXT_COLOR_SECONDARY }}>
+                            <div style={{ fontSize: '16px', fontWeight: 700, color: ACCENT_COLOR_DARK, marginBottom: '10px' }}>
+                                👋 You cannot review your own assignment
+                            </div>
+                            <div style={{ fontSize: '14px', marginBottom: '20px' }}>
+                                You are the uploader of this assignment. Check other assignments to submit reviews and earn points!
+                            </div>
+                            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                                <button style={{...styles.btnUpload, justifyContent: 'center'}} onClick={() => navigate('/dashboard')}>
+                                    ← Back to Assignments
+                                </button>
+                                <button style={{...styles.btnEdit, justifyContent: 'center'}} onClick={handleShowOtherAnswers} disabled={loadingAnswers}>
+                                    {loadingAnswers ? 'Loading...' : '👀 View Reviews'}
+                                </button>
+                            </div>
+                        </div>
+                    ) : !myAnswer || isEditing ? (
                         <>
                             <h3 style={{...styles.descriptionTitle, color: ACCENT_COLOR_DARK}}>
                                 {isEditing ? "Edit Your Answer..." : "Write Your Answer Here..."}
@@ -228,12 +293,42 @@ const AssignmentDetailPage = () => {
                                     Delete
                                 </button>
 
-                                <div style={styles.showOtherLink}>Show Other Answer</div>
+                                <button style={styles.showOtherLink} onClick={handleShowOtherAnswers} disabled={loadingAnswers}>
+                                    {loadingAnswers ? 'Loading...' : 'Show Other Answer'}
+                                </button>
                             </div>
                         </>
                     )}
                 </div>
             </main>
+
+            {/* ⭐ OTHER ANSWERS MODAL */}
+            {showOtherAnswers && (
+                <div style={styles.answersModalOverlay} onClick={() => setShowOtherAnswers(false)}>
+                    <div style={styles.answersModalBox} onClick={(e) => e.stopPropagation()}>
+                        <div style={styles.answersModalHeader}>
+                            <span>Other Reviews</span>
+                            <button style={styles.closeBtn} onClick={() => setShowOtherAnswers(false)}>✕</button>
+                        </div>
+                        
+                        {loadingAnswers ? (
+                            <div style={{ textAlign: 'center', padding: '40px 0' }}>Loading reviews...</div>
+                        ) : otherAnswers.length === 0 ? (
+                            <div style={{ textAlign: 'center', padding: '40px 0', color: TEXT_COLOR_SECONDARY }}>No other reviews yet</div>
+                        ) : (
+                            otherAnswers.map((answer, idx) => (
+                                <div key={idx} style={styles.answerCard}>
+                                    <div style={{ fontWeight: 700, color: ACCENT_COLOR_DARK }}>Review {idx + 1}</div>
+                                    <div style={styles.answerContent}>{answer.content}</div>
+                                    <div style={{ marginTop: '10px', fontSize: '12px', color: TEXT_COLOR_SECONDARY }}>
+                                        {answer.created_at ? new Date(answer.created_at).toLocaleDateString() : 'No date'}
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                </div>
+            )}
 
             {/* ⭐ DELETE MODAL OVERLAY */}
             {showDeleteModal && (
