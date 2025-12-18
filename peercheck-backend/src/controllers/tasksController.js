@@ -1,10 +1,11 @@
+const { v4: uuidv4 } = require('uuid');
+
 const knex = require('../db/knex');
 
 exports.createTask = async (req, res) => {
   try {
     const { description, jurusan, mataKuliah, tingkat, deadline } = req.body;
 
-    // Validate required fields
     if (!description || !jurusan || !mataKuliah || !tingkat || !deadline) {
       return res.status(400).json({ error: 'Missing fields' });
     }
@@ -13,8 +14,12 @@ exports.createTask = async (req, res) => {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    // Insert task (MySQL fix: use returning fallback)
-    const inserted = await knex('tasks').insert({
+    // ✅ GENERATE UUID FOR TASK
+    const taskId = uuidv4();
+
+    // ✅ INSERT WITH ID
+    await knex('tasks').insert({
+      id: taskId,                 // 🔥 THIS WAS MISSING
       uploader_id: req.user.id,
       description,
       jurusan,
@@ -23,19 +28,17 @@ exports.createTask = async (req, res) => {
       deadline
     });
 
-    // MySQL returns [insertId], PostgreSQL returns [{ id }]
-    const taskId = inserted[0]?.id ?? inserted[0];
-
-    // Insert attached files if any
+    // Insert attached files
     let fileRecords = [];
 
     if (req.files && req.files.length > 0) {
       fileRecords = req.files.map(f => ({
-        task_id: taskId,
-        filename: f.filename,
-        original_name: f.originalname,
-        path: f.path
-      }));
+  task_id: taskId,
+  file_path: f.path,          
+  original_name: f.originalname,
+  mime_type: f.mimetype       
+}));
+
 
       await knex('task_files').insert(fileRecords);
     }

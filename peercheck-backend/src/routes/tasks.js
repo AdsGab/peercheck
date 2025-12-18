@@ -103,4 +103,40 @@ router.get('/my', auth, async (req, res) => {
   }
 });
 
+// Get single task by ID (Assignment Detail)
+router.get('/:id', auth, async (req, res) => {
+  try {
+    if (!req.db || typeof req.db !== 'function') {
+      throw new Error("Database connection object missing");
+    }
+
+    const taskId = req.params.id;
+
+    const [rows] = await req.db.raw(
+      "SELECT * FROM tasks WHERE id = ? LIMIT 1",
+      [taskId]
+    );
+
+    if (!rows || rows.length === 0) {
+      return res.status(404).json({ error: "Task not found" });
+    }
+
+    const task = rows[0];
+
+    // Optional: fetch attached files
+    const [files] = await req.db.raw(
+      "SELECT id, file_path, original_name FROM task_files WHERE task_id = ?",
+      [taskId]
+    );
+
+    task.files = files;
+
+    res.json(task);
+  } catch (err) {
+    console.error("Task detail fetch error:", err);
+    res.status(500).json({ error: "Server Error" });
+  }
+});
+
+
 module.exports = router;

@@ -52,5 +52,7 @@ const taskRoutes = require('./routes/tasks');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/tasks', taskRoutes);
+app.use('/api/answers', require('./routes/answers'));
+
 
 module.exports = app;
