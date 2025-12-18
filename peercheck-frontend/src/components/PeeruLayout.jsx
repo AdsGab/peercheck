@@ -155,9 +155,11 @@ const PeeruLayout = ({ children, activeLink, hideRightBlock = false }) => {
             {/* Navbar (z-index: 100) */}
             <nav style={baseStyles.navbar}>
                 <div style={baseStyles.logoGroup}>
-                    <span style={{ color: ACCENT_COLOR, marginRight: '5px' }}>P</span>
-                    <span style={{ fontSize: '20px', letterSpacing: '-0.5px' }}>eeru</span>
-                    <span style={{ fontSize: '10px', marginLeft: '5px', color: '#888' }}>Peer Reviewer</span>
+                    <img 
+                        src="/Logo.png" 
+                        alt="Peeru Logo" 
+                        style={{ height: '40px', marginRight: '8px' }}
+                    />
                 </div>
                 
                 <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '10px' : '20px' }}>
