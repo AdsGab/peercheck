@@ -81,6 +81,7 @@ const styles = {
 const LandingPage = () => {
   return (
     <PeeruLayout activeLink="home">
+
       {/* Subtitle */}
       <div style={styles.subtitle}>
         Upload – Review – Feedback

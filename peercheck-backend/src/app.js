@@ -23,7 +23,7 @@ console.log('-----------------------------');
 const app = express();
 
 // Middleware
-app.use(helmet());
+app.use(helmet({ crossOriginResourcePolicy: false }));
 app.use(express.json());
 app.use(
   cors({
@@ -31,6 +31,9 @@ app.use(
     credentials: true,
   })
 );
+
+// Serve uploaded files
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Middleware to attach the database connection object
 app.use((req, res, next) => {
@@ -49,10 +52,12 @@ app.get('/', (req, res) => res.json({ ok: true, name: 'PeerCheck API' }));
 // Routes
 const authRoutes = require('./routes/auth');
 const taskRoutes = require('./routes/tasks');
+const usersRoutes = require('./routes/users');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api/answers', require('./routes/answers'));
+app.use('/api/users', usersRoutes);
 
 
 module.exports = app;

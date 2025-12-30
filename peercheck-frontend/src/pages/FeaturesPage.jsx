@@ -69,6 +69,7 @@ const FeaturesPage = () => {
     return (
         <PeeruLayout activeLink="features">
 
+
             {/* PAGE HEADER */}
             <h4
                 style={{

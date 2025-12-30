@@ -1,9 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-// ⭐ 1. Import Auth Hook
-import useAuth from "../hooks/useAuth"; 
-
-const BASE_API_URL = "http://localhost:4000/api";
+import useAuth from "../hooks/useAuth";
 
 const ProfilePage = () => {
   // ⭐ 2. Hooks for Logic
@@ -17,26 +14,60 @@ const ProfilePage = () => {
   // (hoverPill was unused in friend's code but kept for safety)
   const [hoverPill, setHoverPill] = useState(null);
 
-  // Data State
-  const [myAssignments, setMyAssignments] = useState([]);
-  const [loadingAssignments, setLoadingAssignments] = useState(false);
-  
-  // Profile Form State
-  const [nameInput, setNameInput] = useState('Anonymus');
-  const [emailInput, setEmailInput] = useState('anonymus@gmail.com');
+  const styles = {
+  page: { fontFamily:"Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto", minHeight:"100vh", width:"100vw", display:"flex", flexDirection:"column", background:"#ffffff", color:"#0b1a1a" },
+
+  header: { display:"flex", alignItems:"center", justifyContent:"space-between", position:"relative", padding:"18px 28px", borderBottom:"1px solid #e6e6e6", background:"#ffffff", width:"100vw", boxSizing:"border-box" },
+
+  logo: { display:"flex", alignItems:"center", gap:10, fontWeight:700, color:"#0b6b58" },
+
+  nav: { display:"flex", gap:18, alignItems:"center", position:"absolute", left:"50%", transform:"translateX(-50%)" },
+
+  content: { maxWidth:1200, margin:"28px auto", padding:"0 18px", boxSizing:"border-box", width:"100%", position:"relative", zIndex:1 },
+
+  topRow: { display:"flex", justifyContent:"space-between", alignItems:"center", gap:12 },
+
+  badgeRow: { display:"flex", gap:12, flexWrap:"wrap", marginTop:18 },
+
+  badge: { background:"#2c7a5b", color:"#dffaf0", padding:"12px 24px", borderRadius:12, fontWeight:700 },
+
+  scoreCard: { marginTop:24, padding:24, background:"#fff", borderRadius:12 },
+
+  progressBarWrap: { marginTop:18, width:"100%" },
+
+  progressTrack: { height:16, background:"#e9e9e9", borderRadius:14, overflow:"hidden", boxShadow:"inset 0 1px 3px rgba(0,0,0,0.15)" },
+
+  progressFill: { height:"100%", background:"linear-gradient(90deg, #1ea97c, #159c71)", borderRadius:14, transition:"width 450ms ease-in-out", boxShadow:"0 0 12px rgba(30,169,124,0.45)" },
+
+  missions: { marginTop:28, display:"grid", gap:14 },
+
+  missionCard: { background:"#0f6a4e", color:"#e9fff4", padding:20, borderRadius:12, display:"flex", justifyContent:"space-between", alignItems:"center", transition:"all 260ms ease", transform:"translateY(0px)" },
+
+  missionCardHover: { transform:"translateY(-4px)", boxShadow:"0 12px 26px rgba(0,0,0,0.18)" },
+
+  goBtn: { background:"#21c79a", color:"#063b2f", padding:"10px 18px", borderRadius:12, border:"none", cursor:"pointer", fontWeight:700, transition:"all 200ms ease" },
+
+  goBtnHover: { transform:"scale(1.05)", boxShadow:"0 6px 20px rgba(27, 211, 172, 0.35)" },
+
+  pillHover: { transform:"translateY(-3px)", boxShadow:"0 8px 18px rgba(0,0,0,0.15)" },
+
+  pillBase: { padding:"12px 26px", borderRadius:28, fontWeight:800, cursor:"pointer", userSelect:"none", transition:"all 220ms ease", display:"inline-flex", alignItems:"center", gap:8 },
+
+  pillActive: { background:"#7FF3DF", color:"#063b2f", boxShadow:"0 4px 12px rgba(0,0,0,0.12)", transform:"translateY(0px)" },
+
+  pillInactive: { background:"#2c7a5b", color:"#dffaf0", opacity:0.9, transform:"translateY(0px)" },
+
+  hiButton: { display:"flex", alignItems:"center", gap:12, background:"#0b6b58", color:"#fff", padding:"10px 18px", borderRadius:30, border:"none", cursor:"pointer", fontWeight:800, outline:"none", boxShadow:"none" },
+
+  hiIcon: { width:28, height:28, borderRadius:14, background:"#d6b77a", color:"#063b2f", display:"inline-flex", alignItems:"center", justifyContent:"center" }
+  };
 
   // UI Toggles
   const [activeSection, setActiveSection] = useState(() => (location && location.state && location.state.tab) ? location.state.tab : 'rank');
-  const [showRoadmap, setShowRoadmap] = useState(false);
-  const [showUploadModal, setShowUploadModal] = useState(false);
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [showSaveConfirm, setShowSaveConfirm] = useState(false);
-  const [uploadMsg, setUploadMsg] = useState("");
-  const [previewUrl, setPreviewUrl] = useState(null);
-  const [uploading, setUploading] = useState(false);
-
-  // Static Data for UI elements not yet in backend
-  const points = 1050; 
+  const [points, setPoints] = useState(0);
+  const [pointsLoading, setPointsLoading] = useState(true);
+  const next = 3000;
+  // Roadmap milestones (shared with Roadmap component) so progress calculations align
   const roadmapMilestones = [
     { v: 0, label: 'Bronze', icon: '🥉' },
     { v: 500, label: 'Silver', icon: '🥈' },
@@ -47,76 +78,34 @@ const ProfilePage = () => {
   ];
   const roadmapMax = roadmapMilestones[roadmapMilestones.length - 1].v;
   const progress = Math.min(100, Math.round((points / roadmapMax) * 100));
+  const [showRoadmap, setShowRoadmap] = useState(false);
+  const navigate = useNavigate();
+  const [userAssignments, setUserAssignments] = useState([]);
+  const [userReviews, setUserReviews] = useState([]);
+  const [reviewsLoading, setReviewsLoading] = useState(true);
 
-  // --- STYLES (EXACT COPY FROM FRIEND'S CODE) ---
-  const styles = {
-    page: { fontFamily:"Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto", minHeight:"100vh", width:"100vw", display:"flex", flexDirection:"column", background:"#ffffff", color:"#0b1a1a" },
-    header: { display:"flex", alignItems:"center", justifyContent:"space-between", position:"relative", padding:"18px 28px", borderBottom:"1px solid #e6e6e6" },
-    logo: { display:"flex", alignItems:"center", gap:10, fontWeight:700, color:"#0b6b58" },
-    nav: { display:"flex", gap:18, alignItems:"center", position:"absolute", left:"50%", transform:"translateX(-50%)" },
-    content: { maxWidth:1200, margin:"28px auto", padding:"0 18px", boxSizing:"border-box" },
-    topRow: { display:"flex", justifyContent:"space-between", alignItems:"center", gap:12 },
-    badgeRow: { display:"flex", gap:12, flexWrap:"wrap", marginTop:18 },
-    badge: { background:"#2c7a5b", color:"#dffaf0", padding:"12px 24px", borderRadius:12, fontWeight:700 },
-    scoreCard: { marginTop:24, padding:24, background:"#fff", borderRadius:12 },
-    progressBarWrap: { marginTop:18, width:"100%" },
-    progressTrack: { height:16, background:"#e9e9e9", borderRadius:14, overflow:"hidden", boxShadow:"inset 0 1px 3px rgba(0,0,0,0.15)" },
-    progressFill: { height:"100%", background:"linear-gradient(90deg, #1ea97c, #159c71)", borderRadius:14, transition:"width 450ms ease-in-out", boxShadow:"0 0 12px rgba(30,169,124,0.45)" },
-    missions: { marginTop:28, display:"grid", gap:14 },
-    missionCard: { background:"#0f6a4e", color:"#e9fff4", padding:20, borderRadius:12, display:"flex", justifyContent:"space-between", alignItems:"center", transition:"all 260ms ease", transform:"translateY(0px)" },
-    missionCardHover: { transform:"translateY(-4px)", boxShadow:"0 12px 26px rgba(0,0,0,0.18)" },
-    goBtn: { background:"#21c79a", color:"#063b2f", padding:"10px 18px", borderRadius:12, border:"none", cursor:"pointer", fontWeight:700, transition:"all 200ms ease" },
-    goBtnHover: { transform:"scale(1.05)", boxShadow:"0 6px 20px rgba(27, 211, 172, 0.35)" },
-    pillHover: { transform:"translateY(-3px)", boxShadow:"0 8px 18px rgba(0,0,0,0.15)" },
-    pillBase: { padding:"12px 26px", borderRadius:28, fontWeight:800, cursor:"pointer", userSelect:"none", transition:"all 220ms ease", display:"inline-flex", alignItems:"center", gap:8 },
-    pillActive: { background:"#7FF3DF", color:"#063b2f", boxShadow:"0 4px 12px rgba(0,0,0,0.12)", transform:"translateY(0px)" },
-    pillInactive: { background:"#2c7a5b", color:"#dffaf0", opacity:0.9, transform:"translateY(0px)" },
-    hiButton: { display:"flex", alignItems:"center", gap:12, background:"#0b6b58", color:"#fff", padding:"10px 18px", borderRadius:30, border:"none", cursor:"pointer", fontWeight:800, outline:"none", boxShadow:"none" },
-    hiIcon: { width:28, height:28, borderRadius:14, background:"#d6b77a", color:"#063b2f", display:"inline-flex", alignItems:"center", justifyContent:"center", fontSize:14, fontWeight:800 }
-  };
+  // Example data for assignments and answers
+  const sampleAssignments = [
+    {
+      id: 1,
+      title: 'Project Tingkat III',
+      course: 'FR & NFR Review',
+      points: 20,
+      time: '10 Menit yang lalu',
+      files: [
+        { id: 'f1', name: 'report.pdf', type: 'pdf', size: '120KB' },
+        { id: 'f2', name: 'diagram.png', type: 'image', size: '450KB', src: '/assets/sample-diagram.png' },
+      ],
+      reviewsCount: 5,
+      reviewers: ['AA', 'BR', 'CM', 'DS', 'ER'],
+    },
+    { id: 2, title: 'Pengolahan PL', course: 'UML & Agile', points: 15, time: '1 Jam yang lalu', files: [{ id: 'f3', name: 'uml.zip', type: 'zip', size: '1.2MB' }], reviewsCount: 3, reviewers: ['AA','BR','CM'] },
+    { id: 3, title: 'User Experience', course: 'Research Plan & Brainstorm', points: 10, time: '2 Jam yang lalu', files: [{ id: 'f4', name: 'ux-mockup.jpg', type: 'image', size: '600KB', src: '/assets/sample-mockup.jpg' }], reviewsCount: 8, reviewers: ['AA','BR','CM','DS','ER','FT','GV','HW'] },
+    { id: 4, title: 'Database Optimization', course: 'Basis Data Lanjut', points: 25, time: '3 Jam yang lalu', files: [{ id: 'f5', name: 'query-plan.pdf', type: 'pdf', size: '200KB' }], reviewsCount: 2, reviewers: ['AA','BR'] },
+    { id: 5, title: 'Sistem Operasi', course: 'Concurrency Assignment', points: 18, time: '8 Jam yang lalu', files: [{ id: 'f6', name: 'lab-results.csv', type: 'csv', size: '85KB' }], reviewsCount: 4, reviewers: ['AA','BR','CM','DS'] },
+    { id: 6, title: 'Pemrograman Mobile', course: 'Android App', points: 30, time: '1 Hari yang lalu', files: [{ id: 'f7', name: 'app-debug.apk', type: 'apk', size: '3.4MB' }], reviewsCount: 6, reviewers: ['AA','BR','CM','DS','ER','FT'] },
+  ];
 
-  // --- LOGIC INTEGRATION ---
-  
-  // 1. Load User Data
-  useEffect(() => {
-    if (user) {
-        setNameInput(user.username || 'Anonymus');
-        setEmailInput(user.email || 'anonymus@gmail.com');
-    }
-  }, [user]);
-
-  // 2. Fetch Assignments
-  useEffect(() => {
-    if (!user) return;
-    const fetchMyAssignments = async () => {
-      const token = localStorage.getItem('token');
-      setLoadingAssignments(true);
-      try {
-        const response = await fetch(`${BASE_API_URL}/tasks/my`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const data = await response.json();
-        setMyAssignments(data); 
-      } catch (err) {
-        console.error("Fetch error:", err);
-      } finally {
-        setLoadingAssignments(false);
-      }
-    };
-    fetchMyAssignments();
-  }, [user]);
-
-  // 3. Helper for Date
-  const formatTimeAgo = (dbDate) => {
-    if (!dbDate) return 'Baru saja';
-    const diff = Math.floor((Date.now() - new Date(dbDate)) / 60000);
-    if (diff < 60) return `${diff} Menit yang lalu`;
-    const hours = Math.floor(diff / 60);
-    if (hours < 24) return `${hours} Jam yang lalu`;
-    return `${Math.floor(hours / 24)} Hari yang lalu`;
-  };
-
-  // 4. Sample Answers (Reviews) - Kept static for now as backend doesn't support yet
   const sampleAnswers = [
     { id: 1, user: 'anonymus', title: 'Review on UX', body: "Anonymous answer submitted on another user's assignment...", points: 10, ratingAvg: 4.2, ratingCount: 5 },
     { id: 2, user: 'anonymus', title: 'Expert Review', body: "Anonymous answer submitted on another user's assignment...", points: 12, ratingAvg: 4.8, ratingCount: 8 },
@@ -129,55 +118,76 @@ const ProfilePage = () => {
     if (activeSection !== 'rank' && showRoadmap) setShowRoadmap(false);
   }, [activeSection, showRoadmap]);
 
+  // Fetch user tasks
   useEffect(() => {
-    if (selectedFile) {
-      const url = URL.createObjectURL(selectedFile);
-      setPreviewUrl(url);
-      return () => URL.revokeObjectURL(url);
-    } else {
-      setPreviewUrl(null);
-    }
-  }, [selectedFile]);
+    const fetchUserTasks = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token || !user?.userId) return;
+        const res = await fetch('http://localhost:4000/api/tasks', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          // Filter to only show assignments uploaded by current user
+          const userUploads = data.filter(task => task.uploader_id === user.userId);
+          setUserAssignments(userUploads);
+        }
+      } catch (err) {
+        console.error('Error fetching tasks:', err);
+      }
+    };
+    fetchUserTasks();
+  }, [user?.userId]);
 
-  function handleFileChange(e) {
-    const f = e.target.files && e.target.files[0];
-    if (!f) return;
-    if (!f.type || !f.type.startsWith('image/')) { setUploadMsg('Please select an image file.'); return; }
-    if (f.size > 5 * 1024 * 1024) { setUploadMsg('Image too large (max 5MB).'); return; }
-    setSelectedFile(f); setUploadMsg('');
-  }
+  // Fetch user reviews (answers) using user ID
+  // Backend filters: answers.user_id = users.id (where users.id = userId parameter)
+  useEffect(() => {
+    const fetchUserReviews = async () => {
+      setReviewsLoading(true);
+      try {
+        const token = localStorage.getItem('token');
+        if (!token || !user?.userId) return;
+        const res = await fetch(`http://localhost:4000/api/users/${user.userId}/answers`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          // Backend already filters: user_id from answers table = id from users table
+          setUserReviews(data);
+        }
+      } catch (err) {
+        console.error('Error fetching user reviews:', err);
+      } finally {
+        setReviewsLoading(false);
+      }
+    };
+    fetchUserReviews();
+  }, [user?.userId]);
 
-  function closeUploadModal() {
-    setSelectedFile(null); setShowUploadModal(false); setUploadMsg('');
-  }
+  // Fetch user contribution points
+  useEffect(() => {
+    const fetchUserPoints = async () => {
+      setPointsLoading(true);
+      try {
+        const token = localStorage.getItem('token');
+        if (!token || !user?.userId) return;
+        const res = await fetch(`http://localhost:4000/api/users/${user.userId}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (data.contribution_points) {
+          setPoints(data.contribution_points);
+        }
+      } catch (err) {
+        console.error('Error fetching user points:', err);
+      } finally {
+        setPointsLoading(false);
+      }
+    };
+    fetchUserPoints();
+  }, [user?.userId]);
 
-  function fileToBase64(file) {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = (err) => reject(err);
-      reader.readAsDataURL(file);
-    });
-  }
-
-  async function handleConfirmUpload(file) {
-    if (!file) return;
-    setUploadMsg('Saving...');
-    try {
-      const b64 = await fileToBase64(file);
-      const pending = { ts: Date.now(), fileName: file.name, dataUrl: b64 };
-      localStorage.setItem('profilePhotoPending', JSON.stringify(pending));
-      setUploadMsg('Saved locally.');
-      setSelectedFile(null); setShowUploadModal(false);
-    } catch (e) { setUploadMsg('Failed to store photo locally.'); }
-  }
-
-  async function handleSaveProfile() {
-    setUploadMsg('Profile saved.');
-    if (selectedFile) await handleConfirmUpload(selectedFile);
-  }
-
-  // --- RENDER ---
   return (
     <div style={styles.page}>
       <header style={styles.header}>
@@ -186,17 +196,13 @@ const ProfilePage = () => {
         </div>
 
         <nav style={styles.nav}>
-          <Link to="/dashboard" style={{ textDecoration: "none", color: "#0b6b58", fontWeight: 600 }}>Assignment</Link>
+          <Link to="/dashboard" style={{ textDecoration: "none", color: "#0b6b58", fontWeight: 700 }}>Assignment</Link>
           <Link to="/upload" style={{ textDecoration: "none", color: "#0b6b58", fontWeight: 700 }}>Upload</Link>
           <Link to="/profile" style={{ textDecoration: "none", color: "#000", fontWeight: 700 }}>Profile</Link>
         </nav>
 
         <div style={{ position: 'absolute', right: 28, top: '50%', transform: 'translateY(-50%)' }}>
-          <button onMouseDown={(e) => e.preventDefault()} onClick={() => setActiveSection('edit')} style={styles.hiButton} aria-label="Open profile edit">
-            <span style={styles.hiIcon}>👤</span>
-            {/* ⭐ Dynamic User Name */}
-            <span>Hi, {user?.username || 'Anonymus'}</span>
-          </button>
+          <HiButton setActiveSection={setActiveSection} />
         </div>
       </header>
 
@@ -241,48 +247,59 @@ const ProfilePage = () => {
           <div style={{ display: 'flex', justifyContent: 'center' }}>
             <div style={{ width: '100%', maxWidth: 900, display: 'flex', flexDirection: 'column', gap: 12 }}>
               
-              {loadingAssignments && <p style={{textAlign: 'center', color: '#666'}}>Loading assignments...</p>}
-              
-              {/* Mapping Real Backend Data */}
-              {myAssignments.map(a => (
-                <div key={a.id} style={{ background: '#e7fff6', borderRadius: 12, padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div>
-                      <div style={{ fontWeight: 800 }}>{a.mata_kuliah || "No Title"}</div>
-                      <div style={{ fontSize: 13, color: '#333', marginTop: 6 }}>{a.jurusan} • {formatTimeAgo(a.created_at)}</div>
-                    </div>
-                    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                      <div style={{ fontWeight: 700 }}>20 Poin</div> 
-                      {/* ⭐ Fixed Button Navigation */}
-                      <button 
-                        style={styles.goBtn} 
-                        onClick={() => navigate(`/assignment/${a.id}`)}
-                      >
-                        Show
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Mock File UI (Preserving layout even if files aren't fetched yet) */}
-                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                    <div style={{ width: 120, borderRadius: 8, background: '#fff', padding: 8, boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'center' }}>
-                      <div style={{ width: 88, height: 60, background: '#f3f3f3', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', fontSize: 24 }}>📄</div>
-                      <div style={{ fontSize: 12, fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', width: '100%', textAlign: 'center' }}>
-                        {a.description ? (a.description.length > 10 ? a.description.substring(0, 10)+'...' : a.description) : 'File'}
+              {(userAssignments.length > 0 ? userAssignments : sampleAssignments).map(a => {
+                const title = a.title || `${a.jurusan || ''}${a.jurusan && a.mata_kuliah ? ' - ' : ''}${a.mata_kuliah || ''}` || 'Assignment';
+                const course = a.course || a.mata_kuliah || '';
+                const time = a.time || (a.created_at ? new Date(a.created_at).toLocaleString() : '');
+                const points = typeof a.points === 'number' ? a.points : 20;
+                const files = Array.isArray(a.files) ? a.files : [];
+                const reviewers = Array.isArray(a.reviewers) ? a.reviewers : [];
+                const reviewsCount = typeof a.reviewsCount === 'number' ? a.reviewsCount : (reviewers.length || 0);
+                return (
+                  <div key={a.id} style={{ background: '#e7fff6', borderRadius: 12, padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div>
+                        <div style={{ fontWeight: 800 }}>{title}</div>
+                        <div style={{ fontSize: 13, color: '#333', marginTop: 6 }}>{course}{time ? ` • ${time}` : ''}</div>
                       </div>
-                      <div style={{ fontSize: 11, color: '#666' }}>PDF/DOC</div>
+                      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                        <div style={{ fontWeight: 700 }}>{points || 0} Poin</div>
+                        <button style={styles.goBtn} onClick={() => navigate(`/assignment/${a.id}`, { state: { uploaderId: a.uploader_id } })}>Show</button>
+                      </div>
                     </div>
-                  </div>
 
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                      <div style={{ width: 28, height: 28, borderRadius: 6, background: '#063b2f', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700 }}>AA</div>
-                      <div style={{ width: 28, height: 28, borderRadius: 6, background: '#063b2f', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700 }}>BR</div>
-                    </div>
-                    <div style={{ marginLeft: 'auto', fontSize: 13, color: '#333' }}>2 Reviews</div>
+                    {files.length > 0 && (
+                      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                        {files.map((f, idx) => (
+                          <div key={f.id ?? idx} style={{ width: 120, borderRadius: 8, background: '#fff', padding: 8, boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'center' }}>
+                            <div style={{ width: 88, height: 60, background: '#f3f3f3', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                              {f.type === 'image' ? (
+                                <img src={f.src || '/assets/file-placeholder.png'} alt={f.name || f.filename || 'file'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                              ) : (
+                                <div style={{ fontSize: 24 }}>📄</div>
+                              )}
+                            </div>
+                            <div style={{ fontSize: 12, fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', width: '100%', textAlign: 'center' }}>{f.name || f.filename || 'file'}</div>
+                            {f.size && (<div style={{ fontSize: 11, color: '#666' }}>{f.size}</div>)}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {(reviewers.length > 0 || reviewsCount > 0) && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                          {reviewers.slice(0, 5).map((r, idx) => (
+                            <div key={idx} title={r} style={{ width: 28, height: 28, borderRadius: 6, background: '#063b2f', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700 }}>{r}</div>
+                          ))}
+                          {reviewsCount > 5 && <div style={{ fontSize: 12, color: '#333' }}>+{reviewsCount - 5} more</div>}
+                        </div>
+                        <div style={{ marginLeft: 'auto', fontSize: 13, color: '#333' }}>{reviewsCount} Reviews</div>
+                      </div>
+                    )}
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
@@ -291,63 +308,54 @@ const ProfilePage = () => {
         {activeSection === 'answer' && (
           <div style={{ display: 'flex', justifyContent: 'center' }}>
             <div style={{ width: '100%', maxWidth: 900, display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {sampleAnswers.map(r => (
-                <div key={r.id} style={{ background: '#f3f3f3', borderRadius: 12, padding: 18, display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-                  <div style={{ width: 60, height: 60, borderRadius: 8, background: '#fff', flex: '0 0 60px' }} />
-                  <div style={{ flex: 1 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <div style={{ fontWeight: 800 }}>{r.user} • {r.title}</div>
-                      <div style={{ fontWeight: 700, color: '#063b2f' }}>+{r.points} Poin</div>
-                    </div>
-                    <div style={{ marginTop: 8, color: '#444' }}>{r.body}</div>
-                    <div style={{ marginTop: 12, display: 'flex', gap: 8, alignItems: 'center' }}>
-                      {/* ⭐ Fixed Button Navigation (Safe Fallback) */}
-                      <button 
-                        style={{ ...styles.goBtn, background: '#fff', color: '#063b2f', border: '1px solid #ccc' }}
-                        onClick={() => navigate(r.assignment_id ? `/assignment/${r.assignment_id}` : '/dashboard')}
-                      >
-                        Go To Page
-                      </button>
-                      <button style={{ ...styles.goBtn, background: '#fff', color: '#063b2f', border: '1px solid #ccc' }}>Edit</button>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 12 }}>
-                        <StarRating avg={r.ratingAvg} />
-                        <div style={{ fontSize: 12, color: '#666' }}>({r.ratingCount})</div>
+              {reviewsLoading ? (
+                <div style={{ textAlign: 'center', padding: '40px 0' }}>Loading reviews...</div>
+              ) : userReviews.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '40px 0', color: '#666' }}>No reviews submitted yet</div>
+              ) : (
+                userReviews.map(r => {
+                  // Find the task title from userAssignments
+                  const task = userAssignments.find(a => a.id === r.task_id);
+                  const taskTitle = task?.title || `${task?.jurusan || ''}${task?.jurusan && task?.mata_kuliah ? ' - ' : ''}${task?.mata_kuliah || ''}` || 'Assignment';
+                  
+                  return (
+                    <div key={r.id} style={{ background: '#f3f3f3', borderRadius: 12, padding: 18, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div>
+                          <div style={{ fontWeight: 800 }}>{taskTitle}</div>
+                          <div style={{ marginTop: 4, fontSize: 13, color: '#666' }}>Your Review</div>
+                        </div>
+                        <div style={{ fontWeight: 700, color: '#063b2f' }}>+{r.points || 0} Poin</div>
+                      </div>
+                      <div style={{ marginTop: 4, color: '#444', lineHeight: '1.5' }}>{r.content}</div>
+
+                      <div style={{ marginTop: 8, display: 'flex', gap: 8 }}>
+                        <button style={{ ...styles.goBtn, background: '#02B692', color: '#fff' }} onClick={() => navigate(`/assignment/${r.task_id}`)}>
+                          Show Review
+                        </button>
                       </div>
                     </div>
-                  </div>
-                  <div style={{ width: 140, flex: '0 0 140px', textAlign: 'center' }}>
-                    <div style={{ background: '#02B692', color: '#fff', padding: '10px 14px', borderRadius: 12, display: 'inline-block' }}>Show Review</div>
-                  </div>
-                </div>
-              ))}
+                  );
+                })
+              )}
             </div>
           </div>
         )}
 
-        {/* ⭐ EDIT PROFILE SECTION (Connected to State) */}
-        {activeSection === 'edit' && (
-          <div style={{ background:"#ffffff", padding:24, borderRadius:16, boxShadow:"0 12px 28px rgba(0,0,0,0.12)", maxWidth:600, display:"flex", flexDirection:"column", gap:18 }}>
-            <div style={{ display:"flex", gap:16, alignItems:"center" }}>
-              {previewUrl ? (
-                <img src={previewUrl} alt="Preview" style={{ width:75, height:75, borderRadius:40, objectFit:"cover", boxShadow:"0 4px 14px rgba(0,0,0,0.18)" }} />
-              ) : (
-                <div style={{ width:75, height:75, borderRadius:40, background:"#e9fff4", display:"flex", alignItems:"center", justifyContent:"center", fontSize:32 }}>👤</div>
-              )}
-              <div>
-                <div style={{ fontWeight:800, fontSize:18, color:"#063b2f" }}>Hi, {nameInput}</div>
-                <button onClick={() => setShowUploadModal(true)} style={{ marginTop:8, padding:"8px 12px", borderRadius:10, background:"#1BC9A2", border:"none", color:"#063b2f", fontWeight:700, cursor:"pointer", transition:"all 220ms ease", boxShadow:"0 4px 10px rgba(27,201,162,0.25)" }}>Change Photo</button>
-              </div>
-            </div>
+{/*Sprint 2*/}
+        {/* Edit section moved to EditProfilePage.jsx */}
 
-            <input placeholder="Name" value={nameInput} onChange={(e) => setNameInput(e.target.value)} style={{ padding:14, borderRadius:12, border:"1px solid #d4e7df", background:"#f7fffc", color:"#063b2f", fontWeight:600, boxShadow:"0 3px 10px rgba(0,0,0,0.06)" }} />
-            <input placeholder="Email" value={emailInput} onChange={(e) => setEmailInput(e.target.value)} style={{ padding:14, borderRadius:12, border:"1px solid #d4e7df", background:"#f7fffc", color:"#063b2f", fontWeight:600, boxShadow:"0 3px 10px rgba(0,0,0,0.06)" }} />
-            <input placeholder="Password" type="password" defaultValue="password1234" disabled style={{ padding:14, borderRadius:12, border:"1px solid #d4e7df", background:"#f7fffc", color:"#063b2f", fontWeight:600, boxShadow:"0 3px 10px rgba(0,0,0,0.06)" }} />
+        {/* Roadmap modal (toggled by trophy) */}
+        {showRoadmap && (
+          <Roadmap points={points} onClose={() => setShowRoadmap(false)} milestones={roadmapMilestones} />
+        )}
 
-            <div style={{ display:"flex", gap:12, marginTop:6 }}>
-              <button onClick={() => setShowSaveConfirm(true)} style={{ flex:1, padding:"12px 18px", borderRadius:14, background:"#0b6b58", color:"#fff", border:"none", fontWeight:800, cursor:"pointer", transition:"all 240ms ease", boxShadow:"0 6px 18px rgba(0,0,0,0.18)" }}>Save</button>
-              <button onClick={() => { logout(); navigate('/login'); }} style={{ flex:1, padding:"12px 18px", borderRadius:14, background:"#fff", color:"#063b2f", border:"1px solid #c7d8d3", fontWeight:800, cursor:"pointer", transition:"all 240ms ease", boxShadow:"0 4px 12px rgba(0,0,0,0.1)" }}>Log Out</button>
-            </div>
-            {uploadMsg && (<div style={{ fontSize:13, color:"#444", marginTop:6 }}>{uploadMsg}</div>)}
+        {/* (Modal rendered via `UploadModal` component above) */}
+
+        {/* Exchange link only visible on Rank tab */}
+        {activeSection === 'rank' && (
+          <div style={{ marginTop: 18 }}>
+            <Link to="/exchangepoin" style={{ textDecoration: "underline", color: "#02B692", fontWeight: 700 }}>Exchange Poin?</Link>
           </div>
         )}
 
@@ -361,19 +369,34 @@ const ProfilePage = () => {
             <div style={{ marginTop: 18 }}><Link to="/exchangepoin" style={{ textDecoration: "underline", color: "#02B692", fontWeight: 700 }}>Exchange Poin?</Link></div>
             <div style={{ marginTop: 12 }}><div style={{ background: '#7FF3DF', color: '#063b2f', padding: '10px 22px', borderRadius: 28, fontWeight: 800, display: 'inline-block' }}>Your Mission</div></div>
             <section style={styles.missions}>
-              <div 
-                style={hoverMission === "upload" ? { ...styles.missionCard, ...styles.missionCardHover } : styles.missionCard} 
-                onMouseEnter={() => setHoverMission("upload")} 
-                onMouseLeave={() => setHoverMission(null)}
-              >
-                <div><div style={{ fontWeight: 800 }}>Upload Assignment</div><div style={{ opacity: 0.9, marginTop: 6 }}>Earn 20 Poin</div></div>
-                <button 
-                  style={hoverGoBtn === "upload" ? { ...styles.goBtn, ...styles.goBtnHover } : styles.goBtn} 
-                  onMouseEnter={() => setHoverGoBtn("upload")} 
-                  onMouseLeave={() => setHoverGoBtn(null)} 
-                  onClick={() => navigate("/upload")}
-                >Go To Page!</button>
-              </div>
+          <div
+        style={ hoverMission === "upload"
+    ? { ...styles.missionCard, ...styles.missionCardHover }
+    : styles.missionCard
+  }
+  
+/*Sprint 1*/
+  onMouseEnter={() => setHoverMission("upload")}
+  onMouseLeave={() => setHoverMission(null)}
+>
+  <div>
+    <div style={{ fontWeight: 800 }}>Upload Assignment</div>
+    <div style={{ opacity: 0.9, marginTop: 6 }}>Earn 20 Poin</div>
+  </div>
+
+  <button
+    style={
+      hoverGoBtn === "upload"
+        ? { ...styles.goBtn, ...styles.goBtnHover }
+        : styles.goBtn
+    }
+    onMouseEnter={() => setHoverGoBtn("upload")}
+    onMouseLeave={() => setHoverGoBtn(null)}
+    onClick={() => { navigate("/upload"); }}
+  >
+    Go To Page!
+  </button>
+</div>
 
               <div 
                 style={hoverMission === "review" ? { ...styles.missionCard, ...styles.missionCardHover } : styles.missionCard} 
@@ -414,11 +437,43 @@ const ProfilePage = () => {
 
 function ProfilePills({ active, setActive }) {
   const [hover, setHover] = React.useState(null);
-  const base = { padding: "12px 26px", borderRadius: 28, fontWeight: 800, cursor: "pointer", userSelect: "none", transition: "all 220ms ease", display: "inline-flex", alignItems: "center", gap: 8 };
-  const activeStyle = { background: "#7FF3DF", color: "#063b2f", boxShadow: "0 4px 12px rgba(0,0,0,0.12)", transform: "translateY(0px)" };
-  const inactiveStyle = { background: "#02B692", color: "#e9fff4", opacity: 0.95, transform: "translateY(0px)" };
-  const hoverStyle = { transform: "translateY(-3px)", boxShadow: "0 8px 20px rgba(0,0,0,0.18)" };
-  const items = [{ key: "rank", label: "🏆 Your Rank" }, { key: "assignment", label: "📄 Your Assignment" }, { key: "answer", label: "✏️ Your Review" }, { key: "edit", label: "⚙️ Edit Profile" }];
+
+  const base = {
+    padding: "12px 26px",
+    borderRadius: 28,
+    fontWeight: 800,
+    cursor: "pointer",
+    userSelect: "none",
+    transition: "all 220ms ease",
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 8
+  };
+
+  const activeStyle = {
+    background: "#7FF3DF",
+    color: "#063b2f",
+    boxShadow: "0 4px 12px rgba(0,0,0,0.12)",
+    transform: "translateY(0px)"
+  };
+
+  const inactiveStyle = {
+    background: "#02B692",
+    color: "#e9fff4",
+    opacity: 0.95,
+    transform: "translateY(0px)"
+  };
+
+  const hoverStyle = {
+    transform: "translateY(-3px)",
+    boxShadow: "0 8px 20px rgba(0,0,0,0.18)"
+  };
+
+  const items = [
+    { key: "rank", label: "🏆 Your Rank" },
+    { key: "assignment", label: "📄 Your Assignment" },
+    { key: "answer", label: "✏️ Your Review" },
+  ];
 
   return (
     <div style={{ display: "flex", gap: 12, rowGap: 20, marginTop: 18, marginBottom: 20, flexWrap: "wrap" }}>
@@ -433,9 +488,9 @@ function ProfilePills({ active, setActive }) {
 
 function Roadmap({ points, onClose, milestones }) {
   const count = milestones.length;
-  const fillTo = 1000;
-  const fillIndex = Math.max(0, Math.min(count - 1, milestones.findIndex(m => m.v === fillTo)));
-  const fillPct = Math.round((fillIndex / Math.max(1, count - 1)) * 100);
+  // Calculate fill percentage based on actual user points
+  const fillPct = Math.min(100, Math.round((points / max) * 100));
+
   const overlay = { position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.12)', zIndex: 1200 };
   const modal = { width: 'min(1000px, 92%)', background: '#e7d2b8', borderRadius: 12, padding: 24, boxSizing: 'border-box' };
   const trackWrap = { position: 'relative', height: 24, boxSizing: 'border-box', width: '100%', marginTop: 12 };
@@ -447,18 +502,51 @@ function Roadmap({ points, onClose, milestones }) {
   );
 }
 
-function UploadModal({ onClose, selectedFile, setSelectedFile, onConfirm }) {
-  const overlay = { position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#02B692cc', zIndex: 1400 };
-  return <div style={overlay} onClick={onClose}><div style={{ width: 'min(720px, 92%)', background: '#e7e7e7', borderRadius: 12, padding: 28 }} onClick={e => e.stopPropagation()}><div style={{ display: 'flex', justifyContent: 'space-between' }}><div>Upload Photo</div><button onClick={onClose}>Close</button></div><div style={{ width: '100%', height: 220, background: '#efefef', display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: 16 }} onClick={() => document.getElementById('profile-upload-input').click()}>{selectedFile ? <img src={URL.createObjectURL(selectedFile)} style={{ maxHeight: 160 }} /> : "Select image"}</div><input id="profile-upload-input" type="file" onChange={e => setSelectedFile(e.target.files[0])} style={{ display: 'none' }} /><button onClick={() => onConfirm(selectedFile)} style={{ marginTop: 10 }}>Confirm</button></div></div>;
-}
-
-function SaveConfirmModal({ onClose, onConfirm }) {
-  const overlay = { position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(2,182,146,0.35)', zIndex: 1400 };
-  return <div style={overlay} onClick={onClose}><div style={{ width: 380, background: '#e7fff4', borderRadius: 12, padding: 20 }} onClick={e => e.stopPropagation()}><div>Confirm Save</div><button onClick={onConfirm}>Yes</button><button onClick={onClose}>Cancel</button></div></div>;
-}
+// Upload modal used when user clicks 'Change Photo' in edit panel
+// Moved to EditProfilePage.jsx
 
 function StarRating({ avg = 0 }) {
   return <div style={{ display: 'flex', gap: 2 }}>{[...Array(5)].map((_, i) => (<span key={i} style={{ color: i < Math.floor(avg) ? '#ffbe2e' : '#ccc' }}>★</span>))}</div>;
+}
+
+function HiButton({ setActiveSection }) {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const [showDropdown, setShowDropdown] = useState(false);
+
+  return (
+    <div style={{ position: 'relative' }}>
+      <button 
+        onClick={() => setShowDropdown(!showDropdown)} 
+        style={{ display: "flex", alignItems: "center", gap: 12, background: "#0b6b58", color: "#fff", padding: "10px 18px", borderRadius: 30, border: "none", cursor: "pointer", fontWeight: 800, outline: "none", boxShadow: "none" }} 
+        aria-label="Open profile menu"
+      >
+        <span style={{ width: 28, height: 28, borderRadius: 14, background: "#d6b77a", color: "#063b2f", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>👤</span>
+        <span>Hi, {user?.username || 'Anonymus'}</span>
+      </button>
+      
+      {showDropdown && (
+        <div style={{ position: 'absolute', top: '110%', right: 0, background: '#fff', borderRadius: 12, boxShadow: '0 4px 12px rgba(0,0,0,0.15)', padding: 8, minWidth: 160, zIndex: 1000 }}>
+          <div 
+            onClick={() => navigate('/edit-profile')}
+            style={{ padding: '10px 12px', cursor: 'pointer', fontWeight: 600, color: '#063b2f', borderRadius: 8, transition: 'background 0.2s' }}
+            onMouseEnter={(e) => e.target.style.background = '#e7fff6'}
+            onMouseLeave={(e) => e.target.style.background = 'transparent'}
+          >
+            Edit Profile
+          </div>
+          <div 
+            onClick={() => { try { logout && logout(); } catch (_) { }; localStorage.removeItem('token'); navigate('/login'); }}
+            style={{ padding: '10px 12px', cursor: 'pointer', fontWeight: 600, color: '#d32f2f', borderRadius: 8, transition: 'background 0.2s' }}
+            onMouseEnter={(e) => e.target.style.background = '#ffebee'}
+            onMouseLeave={(e) => e.target.style.background = 'transparent'}
+          >
+            Log Out
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default ProfilePage;

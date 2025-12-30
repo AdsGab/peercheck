@@ -98,7 +98,12 @@ exports.getTaskById = async (req, res) => {
       .where('task_id', id)
       .select('*');
 
-    task.files = files; 
+    const answers = await knex('answers')
+      .where('task_id', id)
+      .select('*');
+
+    task.files = files;
+    task.answers = answers;
 
     res.json(task);
   } catch (err) {

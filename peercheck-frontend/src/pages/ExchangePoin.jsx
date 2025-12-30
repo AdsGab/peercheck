@@ -1,9 +1,10 @@
-import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import useAuth from "../hooks/useAuth";
 
 {/*Sprint 1*/}
 const ExchangePoin = () => {
-  const points = 1050;
+  const { user } = useAuth();
   const roadmapMilestones = [
   { v: 0, label: 'Bronze', icon: '🥉' },
   { v: 500, label: 'Silver', icon: '🥈' },
@@ -13,23 +14,47 @@ const ExchangePoin = () => {
   { v: 10000, label: 'Expert', icon: '👑' },
 ];
 
-// Cegah undefined (AMAN)
-const currentRank =
-  roadmapMilestones.filter((r) => points >= r.v).slice(-1)[0] ||
-  roadmapMilestones[0];
+  const [pointsState, setPointsState] = useState(0);
+  const [userName, setUserName] = useState(user?.username || 'Anonymus');
+  const [exchangeError, setExchangeError] = useState(null);
+
+  useEffect(() => {
+    const fetchPoints = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token || !user?.userId) return;
+        const res = await fetch(`http://localhost:4000/api/users/${user.userId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
+        if (data && typeof data.contribution_points !== 'undefined') {
+          setPointsState(data.contribution_points);
+          // populate user's name from backend if available
+          if (data.username || data.name) setUserName(data.username || data.name);
+        }
+      } catch (err) {
+        console.error('Failed to fetch user points:', err);
+      }
+    };
+    fetchPoints();
+  }, [user?.userId]);
+
+  // Cegah undefined (AMAN)
+  const currentRank =
+    roadmapMilestones.filter((r) => pointsState >= r.v).slice(-1)[0] ||
+    roadmapMilestones[0];
 
   const nextRankIndex = roadmapMilestones.indexOf(currentRank) + 1;
-  const nextRank =
-  roadmapMilestones[nextRankIndex] || currentRank;
+  const nextRank = roadmapMilestones[nextRankIndex] || currentRank;
 
   let progress = 100;
 
   if (nextRank.v !== currentRank.v) {
-  progress =
-    ((points - currentRank.v) / (nextRank.v - currentRank.v)) * 100;
+    progress = ((pointsState - currentRank.v) / (nextRank.v - currentRank.v)) * 100;
   }
 
   progress = Math.min(100, Math.max(0, Math.round(progress)));
+
   const [options] = useState([
     { points: "10.000 Poin", amount: "Rp.100.000", key: "10k" },
     { points: "1000 Poin", amount: "Rp.10.000", key: "1k" },
@@ -46,7 +71,7 @@ const currentRank =
 
   logo: { display:"flex", alignItems:"center", gap:10, fontWeight:800, color:"#0d8064", fontSize:22, letterSpacing:0.3 },
 
-  nav: { display:"flex", gap:20, alignItems:"center", position:"absolute", left:"50%", transform:"translateX(-50%)" },
+  nav: { display:"flex", gap:18, alignItems:"center", position:"absolute", left:"50%", transform:"translateX(-50%)" },
 
   content: { maxWidth:1200, margin:"32px auto", padding:"0 22px", boxSizing:"border-box" },
 
@@ -74,7 +99,6 @@ const currentRank =
 
 
   const [showModal, setShowModal] = useState(false);
-  const [pointsState, setPointsState] = useState(points);
 
   // exchangeState: null or { step: 'method'|'info'|'confirm'|'done', option, method, name, account }
   const [exchangeState, setExchangeState] = useState(null);
@@ -87,16 +111,13 @@ const currentRank =
         </div>
 
         <nav style={styles.nav}>
-          <Link to="/" style={{ textDecoration: "none", color: "#0b6b58", fontWeight: 600 }}>Assignment</Link>
+          <Link to="/dashboard" style={{ textDecoration: "none", color: "#0b6b58", fontWeight: 700 }}>Assignment</Link>
           <Link to="/upload" style={{ textDecoration: "none", color: "#0b6b58", fontWeight: 700 }}>Upload</Link>
           <Link to="/profile" style={{ textDecoration: "none", color: "#000", fontWeight: 700 }}>Profile</Link>
         </nav>
 
         <div style={{ position: 'absolute', right: 28, top: '50%', transform: 'translateY(-50%)' }}>
-          <button style={{ display: 'flex', alignItems: 'center', gap: 12, background: '#0b6b58', color: '#fff', padding: '10px 18px', borderRadius: 30, border: 'none', cursor: 'pointer', fontWeight: 800 }} onMouseDown={(e) => e.preventDefault()}>
-            <span style={{ width: 28, height: 28, borderRadius: 14, background: '#d6b77a', color: '#063b2f', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 800 }}>👤</span>
-            <span>Hi, Anonymus</span>
-          </button>
+          <HiButton />
         </div>
       </header>
 
@@ -114,7 +135,7 @@ const currentRank =
             }}
             >
         <h2 style={{ margin: 0, fontSize: 32 }}>
-          {points} Poin, Your Rank Now Is :
+          {pointsState} Poin, Your Rank Now Is :
         </h2>
 
       <span style={{ fontSize: 36 }}>
@@ -190,12 +211,13 @@ const currentRank =
           onMouseLeave={() => setHoverAmountBtn(null)}
           onClick={() => {
             const numeric = parseInt(String(o.points).replace(/[^0-9]/g, ''), 10) || 0;
+            setExchangeError(null);
             setExchangeState({
               step: 'method',
               option: o,
               cost: numeric,
               method: '',
-              name: 'Anonymus',
+              name: userName || (user?.username || 'Anonymus'),
               account: ''
             });
           }}
@@ -253,10 +275,10 @@ const currentRank =
       {[
         { name: "ShopeePay", logo: "/shopeepay.jpg" },
         { name: "Gopay", logo: "/gopay.png" },
-        { name: "Ovo", logo: "/ovo.png" },
-        { name: "Bank", logo: "/bank.png" },
+        { name: "OVO", logo: "/ovo.png" },
+        { name: "Bank Transfer", logo: "/bank.png" },
         { name: "Dana", logo: "/dana.png" },
-        { name: "Link Aja", logo: "/link aja.png" }
+        { name: "LinkAja", logo: "/link aja.png" }
       ].map((m) => (
         <button
           key={m.name}
@@ -312,7 +334,7 @@ const currentRank =
                 <div style={{ marginTop: 18, display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
                   <button onClick={() => setExchangeState(null)} style={{ padding: '8px 12px', borderRadius: 8, background: '#eee', border: 'none', cursor: 'pointer' }}>Back</button>
                   <button
-                    onClick={() => setExchangeState(prev => ({ ...prev, step: 'confirm' }))}
+                    onClick={() => { setExchangeError(null); setExchangeState(prev => ({ ...prev, step: 'confirm' })); }}
                     style={{ padding: '8px 12px', borderRadius: 8, background: '#17c7a3', border: 'none', cursor: 'pointer', fontWeight: 800 }}
                   >
                     Next
@@ -337,8 +359,14 @@ const currentRank =
                   <button onClick={() => setExchangeState(prev => ({ ...prev, step: 'info' }))} style={{ padding: '8px 12px', borderRadius: 8, background: '#eee', border: 'none', cursor: 'pointer' }}>Back</button>
                   <button
                     onClick={() => {
+                      setExchangeError(null);
+                      const cost = exchangeState?.cost || 0;
+                      if (pointsState < cost) {
+                        setExchangeError('Your points are not enough to redeem this package.');
+                        return;
+                      }
                       // simulate processing: deduct points and show done
-                      setPointsState(prev => Math.max(0, prev - (exchangeState.cost || 0)));
+                      setPointsState(prev => Math.max(0, prev - cost));
                       setExchangeState(prev => ({ ...prev, step: 'done' }));
                     }}
                     style={{ padding: '8px 12px', borderRadius: 8, background: '#0b6b58', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 800 }}
@@ -358,11 +386,26 @@ const currentRank =
                 </div>
               </div>
             )}
+            {/* show error message when points are insufficient */}
+            {exchangeError && (
+              <div style={{ color: 'crimson', fontWeight: 800, marginTop: 12, textAlign: 'center' }}>{exchangeError}</div>
+            )}
           </div>
         </div>
       )}
     </div>
   );
 };
+
+function HiButton() {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  return (
+    <button onMouseDown={(e) => e.preventDefault()} onClick={() => navigate('/profile', { state: { tab: 'edit' } })} style={{ display: 'flex', alignItems: 'center', gap: 12, background: '#0b6b58', color: '#fff', padding: '10px 18px', borderRadius: 30, border: 'none', cursor: 'pointer', fontWeight: 800 }}>
+      <span style={{ width: 28, height: 28, borderRadius: 14, background: '#d6b77a', color: '#063b2f', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 800 }}>👤</span>
+      <span>Hi, {user?.username || 'Anonymus'}</span>
+    </button>
+  );
+}
 
 export default ExchangePoin;

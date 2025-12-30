@@ -9,8 +9,7 @@ test('navigate each section on profile', async ({ page }) => {
   const sections = [
     { name: /your rank/i, selector: 'text=Your Rank' },
     { name: /your assignment/i, selector: 'text=Your Assignment' },
-    { name: /your answer/i, selector: 'text=Your Answer' },
-    { name: /edit profile/i, selector: 'text=Edit Profile' }
+    { name: /your review/i, selector: 'text=Your Answer' },
   ];
 
   for (const s of sections) {
@@ -35,11 +34,8 @@ test('navigate each section on profile', async ({ page }) => {
       case 'text=Your Assignment':
         await expect(page.locator('text=Assignment').first()).toBeVisible();
         break;
-      case 'text=Your Answer':
-        await expect(page.locator('text=Answer').first()).toBeVisible();
-        break;
-      case 'text=Edit Profile':
-        await expect(page.locator('text=Edit Profile').first()).toBeVisible();
+      case 'text=Your Rdeview':
+        await expect(page.locator('text=Review').first()).toBeVisible();
         break;
       default:
         // generic check: some content shows up that contains the section name

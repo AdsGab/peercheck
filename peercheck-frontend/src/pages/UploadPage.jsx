@@ -1,5 +1,6 @@
 import React, { useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import useAuth from "../hooks/useAuth";
 
 const UploadPage = () => {
   const fileInputRef = useRef(null);
@@ -45,6 +46,58 @@ const UploadPage = () => {
   const clearFile = () => {
     setFiles([]);
     if (fileInputRef.current) fileInputRef.current.value = null;
+  };
+
+  const handleUpload = async () => {
+    if (!description || !deadline || !jurusan || !mataKuliah || !tingkat) {
+      alert("Please fill all fields");
+      return;
+    }
+
+    if (files.length === 0) {
+      alert("Please add at least one file");
+      return;
+    }
+
+    try {
+      const formData = new FormData();
+      formData.append("description", description);
+      formData.append("deadline", deadline);
+      formData.append("jurusan", jurusan);
+      formData.append("mataKuliah", mataKuliah);
+      formData.append("tingkat", tingkat);
+
+      // append all uploaded files
+      files.forEach((f) => {
+        formData.append("files", f.file);
+      });
+      const token = localStorage.getItem("token");
+
+      const res = await fetch("http://localhost:4000/api/tasks", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        alert("Upload success!");
+        setFiles([]);
+        setDescription("");
+        setDeadline("");
+        setJurusan("");
+        setMataKuliah("");
+        setTingkat("");
+      } else {
+        alert("Upload failed: " + data.error);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Failed to upload");
+    }
   };
   
 {/*Sprint 2*/}
@@ -151,10 +204,11 @@ const UploadPage = () => {
           <img src="/Logo.png" alt="PIRU" style={{ height: 50, objectFit: 'contain' }} />
         </div>
 
+        {/* Nav with styling matching ProfilePage */}
         <nav style={styles.nav}>
-          <Link to="/" style={styles.link}>Assignment</Link>
-          <Link to="/upload" style={{ color: '#000', fontWeight: 700 }}>Upload</Link>
-          <Link to="/profile" style={{ ...styles.link, fontWeight: 700 }}>Profile</Link>
+          <Link to="/dashboard" style={{ ...styles.link, color: '#0b6b58', fontWeight: 700, textDecoration: 'none' }}>Assignment</Link>
+          <Link to="/upload" style={{ ...styles.link, color: '#000', fontWeight: 700, textDecoration: 'none' }}>Upload</Link>
+          <Link to="/profile" style={{ ...styles.link, color: '#0b6b58', fontWeight: 700, textDecoration: 'none' }}>Profile</Link>
         </nav>
         
         <div style={{ position: 'absolute', right: 28, top: '50%', transform: 'translateY(-50%)' }}>
@@ -261,7 +315,7 @@ const UploadPage = () => {
                 </div>
 
                 <div style={{ display: "flex", gap: 12 }}>
-                  <button style={{ ...styles.btnPrimary, ...styles.btnPrimaryIcon }} onClick={() => alert('Upload logic not implemented')}> 
+                  <button style={{ ...styles.btnPrimary, ...styles.btnPrimaryIcon }} onClick={handleUpload}> 
                     <span style={{ display: "inline-block" }}>⬆️</span>
                     <span>Upload</span>
                   </button>
@@ -440,15 +494,41 @@ export default UploadPage;
 
 function HiButton() {
   const navigate = useNavigate();
+  const { user, logout } = useAuth();
+  const [showDropdown, setShowDropdown] = useState(false);
+
   return (
-    <button
-      onMouseDown={(e) => e.preventDefault()}
-      onClick={() => navigate('/profile', { state: { tab: 'edit' } })}
-      style={{ display: 'flex', alignItems: 'center', gap: 12, background: '#0b6b58', color: '#fff', padding: '10px 18px', borderRadius: 30, border: 'none', cursor: 'pointer', fontWeight: 800, outline: 'none', boxShadow: 'none', appearance: 'none', WebkitAppearance: 'none', MozAppearance: 'none' }}
-      aria-label="Open profile edit"
-    >
-      <span style={{ width: 28, height: 28, borderRadius: 14, background: '#d6b77a', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: '#063b2f' }}>👤</span>
-      <span>Hi, Anonymus</span>
-    </button>
+    <div style={{ position: 'relative' }}>
+      <button
+        onMouseDown={(e) => e.preventDefault()}
+        onClick={() => setShowDropdown(!showDropdown)}
+        style={{ display: 'flex', alignItems: 'center', gap: 12, background: '#0b6b58', color: '#fff', padding: '10px 18px', borderRadius: 30, border: 'none', cursor: 'pointer', fontWeight: 800, outline: 'none', boxShadow: 'none', appearance: 'none', WebkitAppearance: 'none', MozAppearance: 'none' }}
+        aria-label="Open profile menu"
+      >
+        <span style={{ width: 28, height: 28, borderRadius: 14, background: '#d6b77a', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: '#063b2f' }}>👤</span>
+        <span>Hi, {user?.username || 'Anonymus'}</span>
+      </button>
+
+      {showDropdown && (
+        <div style={{ position: 'absolute', top: '110%', right: 0, background: '#fff', borderRadius: 12, boxShadow: '0 4px 12px rgba(0,0,0,0.15)', padding: 8, minWidth: 160, zIndex: 1000 }}>
+          <div 
+            onClick={() => navigate('/edit-profile')}
+            style={{ padding: '10px 12px', cursor: 'pointer', fontWeight: 600, color: '#063b2f', borderRadius: 8, transition: 'background 0.2s' }}
+            onMouseEnter={(e) => e.target.style.background = '#e7fff6'}
+            onMouseLeave={(e) => e.target.style.background = 'transparent'}
+          >
+            Edit Profile
+          </div>
+          <div 
+            onClick={() => { try { logout && logout(); } catch (_) { }; localStorage.removeItem('token'); navigate('/login'); }}
+            style={{ padding: '10px 12px', cursor: 'pointer', fontWeight: 600, color: '#d32f2f', borderRadius: 8, transition: 'background 0.2s' }}
+            onMouseEnter={(e) => e.target.style.background = '#ffebee'}
+            onMouseLeave={(e) => e.target.style.background = 'transparent'}
+          >
+            Log Out
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
