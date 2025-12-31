@@ -1,23 +1,19 @@
-// LoginPage.jsx
+
 
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom"; 
 import loginPageIMG from "../assets/loginPageIMG.jpg";
-// ⭐ CRITICAL FIX: Import useAuth hook
 import useAuth from "../hooks/useAuth"; 
 
-// --- 1. CONSTANTS (Unchanged) ---
 const ACCENT_COLOR = "#4DF3C8";
 const CARD_BG = "#ffffff";
 const INPUT_BG = "#e8e8e8";
 const OVERLAY_COLOR = "rgba(29, 29, 29, 0.7)";
 
-// Use the public asset `public/Google.png` so browsers render the icon reliably
 const GoogleIcon = ({ style }) => (
   <img src="/Google.png" alt="Google" style={{ width: 20, height: 20, marginRight: 10, ...style }} />
 );
 
-// --- 3. STYLES (Unchanged) ---
 const styles = {
   container: {
     display: "flex",
