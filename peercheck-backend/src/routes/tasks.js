@@ -22,57 +22,39 @@ const storage = multer.diskStorage({
   }
 });
 
-// Accept PDF + Word files
 const upload = multer({
   storage,
   limits: { fileSize: 10 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
-    const allowed = [
-      "application/pdf",
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-      "image/jpeg", // Added images based on your file pill icons
-      "image/png",
-      "image/jpg"
-    ];
-    // Relaxed filter for now to prevent upload errors
     cb(null, true);
   }
 });
 
+// --- ROUTES ---
 
+// 1. Create Task (Upload)
 router.post('/', auth, upload.array("files"), taskController.createTask);
 
-router.get('/', auth, async (req, res) => {
-  try {
-    const [tasks] = await req.db.raw("SELECT * FROM tasks ORDER BY created_at DESC");
-    res.json(tasks); 
-  } catch (err) {
-    res.status(500).json({ error: err.message || "Server Error" });
-  }
-});
+// 2. Get All Tasks (Feed) - ⭐ UPDATED to use Controller
+router.get('/', auth, taskController.getAllTasks);
 
-router.get('/file/:filename', auth, (req, res) => {
-  const filePath = path.join(UPLOAD_DIR, req.params.filename);
-  if (!fs.existsSync(filePath)) {
-    return res.status(404).json({ error: "File not found" });
-  }
-  res.download(filePath);
-});
+// 3. Download File - ⭐ UPDATED to use Controller
+router.get('/file/:filename', auth, taskController.downloadFile);
 
-router.get('/my', auth, async (req, res) => {
-  try {
-    if (!req.user || !req.user.id) return res.status(401).json({ error: "Unauthorized" });
-    const uploaderId = req.user.id;
-    const [tasks] = await req.db.raw("SELECT * FROM tasks WHERE uploader_id = ? ORDER BY created_at DESC", [uploaderId]);
-    res.json(tasks);
-  } catch (err) {
-    res.status(500).json({ error: err.message || "Server Error" });
-  }
-});
+// 4. Get MY Tasks (Profile) - ⭐ UPDATED (Crucial for Review Counts)
+router.get('/my', auth, taskController.getMyTasks);
 
+// 5. Get Single Task Details
 router.get('/:id', auth, taskController.getTaskById);
+
+// 6. Answers (Reviews)
 router.post('/:id/answer', auth, taskController.createAnswer);
 router.get('/:id/answer', auth, taskController.getMyAnswer);
 router.put('/:id/answer', auth, taskController.updateAnswer);
 router.delete('/:id/answer', auth, taskController.deleteAnswer);
+
+// 7. Comments & Ratings
+router.post('/answers/:answerId/comments', auth, taskController.createComment);
+router.post('/answers/:answerId/rate', auth, taskController.submitRating);
+
 module.exports = router;
