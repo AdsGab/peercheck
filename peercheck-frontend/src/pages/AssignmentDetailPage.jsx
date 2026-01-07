@@ -77,7 +77,11 @@ function AppNavbar({ activePage }) {
     const linkStyle = (page) => ({ ...styles.link, textDecoration: 'none', color: activePage === page ? '#000' : styles.link.color, fontWeight: 700 });
     return (
         <header style={styles.header}>
-            <div style={styles.logo}><img src="/Logo.png" alt="PIRU" style={{ height: 50, objectFit: 'contain' }} /></div>
+            <div style={styles.logo}>
+                <Link to="/dashboard" style={{ display: 'flex', alignItems: 'center' }}>
+                    <img src="/Logo.png" alt="PIRU" style={{ height: 50, objectFit: 'contain' }} />
+                </Link>
+            </div>
             <nav style={styles.nav}>
                 <Link to="/dashboard" style={linkStyle('assignment')}>Assignment</Link>
                 <Link to="/upload" style={linkStyle('upload')}>Upload</Link>

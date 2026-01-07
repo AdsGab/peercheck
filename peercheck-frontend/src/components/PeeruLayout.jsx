@@ -151,7 +151,9 @@ const PeeruLayout = ({ children, activeLink, hideRightBlock = false }) => {
             <nav style={baseStyles.navbar}>
                 {/* Logo - Left */}
                 <div style={{ display: 'flex', alignItems: 'center', height: '40px' }}>
-                    <img src={peeruLogo} alt="Peeru Logo" style={{ height: '44px', width: 'auto', cursor: 'pointer' }} />
+                    <Link to="/">
+                        <img src={peeruLogo} alt="Peeru Logo" style={{ height: '44px', width: 'auto', cursor: 'pointer' }} />
+                    </Link>
                 </div>
 
                 {/* Centered Navigation Links */}

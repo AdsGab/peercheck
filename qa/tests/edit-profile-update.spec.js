@@ -3,8 +3,8 @@ const { test, expect } = require('@playwright/test');
 test('should navigate to edit profile page', async ({ page }) => {
   // Login
   await page.goto('/login');
-  await page.fill('input[type="email"]', 'test@example.com');
-  await page.fill('input[type="password"]', 'password123');
+  await page.fill('input[type="email"]', 'iqbalnur2003@gmail.com');
+  await page.fill('input[type="password"]', '123');
   await page.click('button:has-text("Login")');
   await page.waitForURL('**/dashboard');
 

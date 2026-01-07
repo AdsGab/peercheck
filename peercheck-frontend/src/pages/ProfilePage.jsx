@@ -108,7 +108,9 @@ const ProfilePage = () => {
     <div style={styles.page}>
       <header style={styles.header}>
         <div style={styles.logo}>
-          <img src="/Logo.png" alt="PIRU" style={{ height: 50, objectFit: 'contain' }} />
+          <Link to="/dashboard" style={{ display: 'flex', alignItems: 'center' }}>
+            <img src="/Logo.png" alt="PIRU" style={{ height: 50, objectFit: 'contain' }} />
+          </Link>
         </div>
 
         <nav style={styles.nav}>

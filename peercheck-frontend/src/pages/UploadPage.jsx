@@ -201,7 +201,9 @@ const UploadPage = () => {
       <header style={styles.header}>
         <div style={styles.logo}>
           {/* Logo image should be placed in public/Logo.png */}
-          <img src="/Logo.png" alt="PIRU" style={{ height: 50, objectFit: 'contain' }} />
+          <Link to="/dashboard" style={{ display: 'flex', alignItems: 'center' }}>
+            <img src="/Logo.png" alt="PIRU" style={{ height: 50, objectFit: 'contain' }} />
+          </Link>
         </div>
 
         {/* Nav with styling matching ProfilePage */}

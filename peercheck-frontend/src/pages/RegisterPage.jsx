@@ -240,7 +240,9 @@ const RegisterPage = () => {
       >
         {/* LOGO POSITIONED ABSOLUTELY from the top-left corner */}
                         <div style={styles.logo}>
-                          <img src="/Logo.png" alt="PIRU Logo" style={{ height: 48, width: 'auto' }} />
+                          <Link to="/">
+                            <img src="/Logo.png" alt="PIRU Logo" style={{ height: 48, width: 'auto' }} />
+                          </Link>
                         </div>
 
         {/* Content Block */}

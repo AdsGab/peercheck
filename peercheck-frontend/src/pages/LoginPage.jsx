@@ -204,7 +204,9 @@ const LoginPage = () => {
       >
         {/* LOGO POSITIONED ABSOLUTELY from the top-left corner */}
         <div style={styles.logo}>
-          <img src="/Logo.png" alt="PIRU" style={{ height: 48, width: 'auto' }} />
+          <Link to="/">
+            <img src="/Logo.png" alt="PIRU" style={{ height: 48, width: 'auto' }} />
+          </Link>
         </div>
 
         {/* Content Block: Uses margin-top to achieve desired low position */}

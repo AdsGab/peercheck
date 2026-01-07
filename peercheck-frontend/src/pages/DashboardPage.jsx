@@ -80,7 +80,11 @@ function AppNavbar({ activePage }) {
     const linkStyle = (page) => ({ ...uploadPageStyles.link, color: activePage === page ? '#000' : uploadPageStyles.link.color, fontWeight: 700 });
     return (
         <header style={uploadPageStyles.header}>
-            <div style={uploadPageStyles.logo}><img src="/Logo.png" alt="PIRU" style={{ height: 50, objectFit: 'contain' }} /></div>
+            <div style={uploadPageStyles.logo}>
+                <Link to="/dashboard" style={{ display: 'flex', alignItems: 'center' }}>
+                    <img src="/Logo.png" alt="PIRU" style={{ height: 50, objectFit: 'contain' }} />
+                </Link>
+            </div>
             <nav style={uploadPageStyles.nav}>
                 <Link to="/dashboard" style={linkStyle('assignment')}>Assignment</Link>
                 <Link to="/upload" style={linkStyle('upload')}>Upload</Link>
