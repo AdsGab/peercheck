@@ -2,7 +2,7 @@
 
 This folder contains a minimal Playwright test scaffold.
 
-Quick start (from `n:\Semester 7 Njir\peercheck\qa`):
+Quick start (from `n:\Semester 7\peercheck\qa`):
 
 PowerShell commands:
 
